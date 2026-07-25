@@ -1,0 +1,16 @@
+{
+  "name": "app/backend",
+  "description": "Backend da aplicação de enquetes",
+  "type": "project",
+  "require": {
+    "vlucas/phpdotenv": "^5.5",
+    "firebase/php-jwt": "^7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Controllers\\": "src/controllers/",
+      "Middlewares\\": "src/middlewares/",
+      "Config\\": "src/config/"
+    }
+  }
+}
