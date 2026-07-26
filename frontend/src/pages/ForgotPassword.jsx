@@ -12,12 +12,7 @@ export default function ForgotPassword() {
         const loadingToast = toast.loading('Enviando e-mail...');
 
         try {
-            const response = await api.post('/forgot-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email }),
-            });
-
+            const response = await api.post('/forgot-password', { email });
             const data = await response.json();
 
             // Remove a mensagem de carregamento
