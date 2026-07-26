@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input.jsx";
 import {AuthContext} from "@/context/AuthContext.jsx";
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const formSchema = z.object({
     nome: z.string().optional(),
@@ -137,12 +138,12 @@ export default function Auth() {
                                     <div className="flex items-center justify-between">
                                         <FormLabel>Senha</FormLabel>
                                         {isLogin && (
-                                            <button
-                                                type="button"
+                                            <Link
+                                                to="/forgot-password"
                                                 className="text-xs text-muted-foreground underline-offset-2 transition-colors hover:text-primary hover:underline"
                                             >
                                                 Esqueceu a senha?
-                                            </button>
+                                            </Link>
                                         )}
                                     </div>
                                     <FormControl>

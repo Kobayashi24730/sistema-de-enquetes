@@ -7,12 +7,15 @@ import Criar from '@/pages/Criar.jsx';
 import Editar from '@/pages/Editar.jsx';
 import {AuthProvider} from "@/context/AuthContext.jsx";
 import EnqueteDetalhe from "@/pages/EnqueteDetalhe.jsx";
+import ForgotPassword from "@/pages/ForgotPassword.jsx";
+import { Toaster} from "react-hot-toast";
 
 export default function App() {
     return (
         <AuthProvider>
             <BrowserRouter>
                 <div className="min-h-screen bg-background text-foreground">
+                    <Toaster position="top-right" reverseOrder={false}/>
                     <Header />
                     <main>
                         <Routes>
@@ -22,6 +25,7 @@ export default function App() {
                             <Route path="/criar" element={<Criar />} />
                             <Route path="/enquete/:id" element={<EnqueteDetalhe />} />
                             <Route path="/editar/:id" element={<Editar />} />
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
                         </Routes>
                     </main>
                 </div>
