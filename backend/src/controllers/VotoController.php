@@ -1,8 +1,13 @@
 <?php
 
-// Imports do PHPMailer no topo do arquivo
+namespace Controllers;
+
+// Imports de Namespaces
+use Config\Database;
+use Middlewares\AuthMiddleware; // Ajuste conforme o caminho exato do seu AuthMiddleware
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use PDO;
 
 class VotoController {
 
