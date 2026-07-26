@@ -43,7 +43,7 @@ class Migration {
                 user_id INT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE KEY unique_user_poll (user_id, poll_id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",
 
             "CREATE TABLE IF NOT EXISTS password_resets (
                  id INT AUTO_INCREMENT PRIMARY KEY,
