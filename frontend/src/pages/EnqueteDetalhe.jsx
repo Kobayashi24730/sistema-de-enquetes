@@ -52,7 +52,7 @@ export default function EnqueteDetalhe() {
         setVoting(true);
         try {
             await api.post('/enquetes/vote', {
-                poll_id: id,
+                enquete_id: id,
                 option_id: selectedOption
             });
 
