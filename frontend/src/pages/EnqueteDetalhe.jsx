@@ -5,7 +5,7 @@ import api from '../services/api.js';
 import { AuthContext } from '../context/AuthContext.jsx';
 import Resultados from '@/components/Resultados.jsx';
 import { Chart } from '@/components/Charts.jsx';
-import { getVotedPolls, saveVotedPoll } from '@/hooks/usePollsRealtime.js'; // Importa persistência local
+import { getVotedPolls, saveVotedPoll } from '@/hooks/useRealTime.js'; // Importa persistência local
 
 // Estilos Fluent estritamente claros
 const fluentCard =

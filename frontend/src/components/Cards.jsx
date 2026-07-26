@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Clock, User2, BarChart3, ChevronRight, CheckCircle2 } from "lucide-react";
 import Resultados from "@/components/Resultados.jsx";
-import { getVotedPolls } from "@/hooks/usePollsRealtime"; // Importe a função do localStorage
+import { getVotedPolls } from "@/hooks/useRealTime"; // Importe a função do localStorage
 
 export default function Card({ enquete }) {
     if (!enquete) {
