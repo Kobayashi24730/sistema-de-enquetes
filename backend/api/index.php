@@ -82,15 +82,23 @@ switch ($route) {
         }
         break;
 
-    case '/reset-password':
     case '/forgot-password':
-        if ($method === 'POST') {
-            $forgotPasswordController->resetPassword();
-        } else {
-            http_response_code(405);
-            echo json_encode(['error' => 'Método não permitido. Use POST.']);
-        }
-        break;
+            if ($method === 'POST') {
+                $forgotPasswordController->sendResetLink();
+            } else {
+                http_response_code(405);
+                echo json_encode(['error' => 'Método não permitido. Use POST.']);
+            }
+            break;
+
+        case '/reset-password':
+            if ($method === 'POST') {
+                $forgotPasswordController->resetPassword();
+            } else {
+                http_response_code(405);
+                echo json_encode(['error' => 'Método não permitido. Use POST.']);
+            }
+            break;
 
     case '/profile':
     case '/perfil':
