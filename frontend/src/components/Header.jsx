@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { BarChart3, LogOut, Plus } from "lucide-react";
-import { AuthContext } from '@/context/AuthContext';
+import { AuthContext } from '@/context/AuthContext.jsx';
 import {useContext} from "react";
 
 export default function Header() {

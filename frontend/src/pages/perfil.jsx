@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 import { Link } from 'react-router-dom';
-import api from '@/services/api';
+import api from '@/services/api.js';
 
 export default function Perfil() {
     const { user, setUser, logout, loading } = useContext(AuthContext);

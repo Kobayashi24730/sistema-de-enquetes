@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Clock, User2, BarChart3, ChevronRight } from "lucide-react";
-import Resultados from "@/components/Resultados";
+import Resultados from "@/components/Resultados.jsx";
 
 export default function Card({ enquete }) {
     console.log(enquete);

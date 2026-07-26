@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import Card from '@/components/Cards';
+import Card from '@/components/Cards.jsx';
 import { Search } from "lucide-react";
-import { usePollsRealtime } from '@/hooks/useRealTime';
-import Filters from '@/components/Filters';
+import { usePollsRealtime } from '@/hooks/useRealTime.ts';
+import Filters from '@/components/Filters.jsx';
 
 export default function Home() {
     const { polls, loading } = usePollsRealtime(8000);

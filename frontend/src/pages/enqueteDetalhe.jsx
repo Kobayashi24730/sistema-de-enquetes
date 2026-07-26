@@ -1,10 +1,10 @@
 import { useEffect, useState, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Share2, Edit3, Trash2, User2, Clock, CheckCircle2, BarChart2 } from 'lucide-react';
-import api from '../services/api';
-import { AuthContext } from '../context/AuthContext';
-import Resultados from '@/components/Resultados';
-import { Chart } from '@/components/Charts';
+import api from '../services/api.js';
+import { AuthContext } from '../context/AuthContext.jsx';
+import Resultados from '@/components/Resultados.jsx';
+import { Chart } from '@/components/Charts.jsx';
 
 // Estilos Fluent estritamente claros
 const fluentCard =

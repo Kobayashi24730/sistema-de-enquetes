@@ -11,8 +11,8 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/form.jsx";
+import { Input } from "@/components/ui/input.jsx";
 import {AuthContext} from "@/context/AuthContext.jsx";
 import { useNavigate } from 'react-router-dom';
 

@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Header from '@/components/Header';
-import Home from '@/pages/Home';
-import Auth from '@/pages/Auth';
-import Perfil from '@/pages/Perfil';
-import Criar from '@/pages/Criar';
-import Editar from '@/pages/editar';
-import {AuthProvider} from "@/context/AuthContext";
-import EnqueteDetalhe from "@/pages/enqueteDetalhe";
+import Header from '@/components/Header.jsx';
+import Home from '@/pages/Home.jsx';
+import Auth from '@/pages/Auth.jsx';
+import Perfil from '@/pages/Perfil.jsx';
+import Criar from '@/pages/Criar.jsx';
+import Editar from '@/pages/editar.jsx';
+import {AuthProvider} from "@/context/AuthContext.jsx";
+import EnqueteDetalhe from "@/pages/enqueteDetalhe.jsx";
 
 export default function App() {
     return (

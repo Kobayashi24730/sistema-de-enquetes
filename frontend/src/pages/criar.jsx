@@ -1,8 +1,8 @@
 import { useState, useContext } from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import { Plus, Trash2, ChevronDown } from 'lucide-react';
-import api from '@/services/api';
-import { AuthContext } from '@/context/AuthContext';
+import api from '@/services/api.js';
+import { AuthContext } from '@/context/AuthContext.jsx';
 
 const inputsSettings = [
     { title: "Título", type: "text", name: "title", placeholder: "Ex: Qual a melhor linguagem?" },

@@ -1,4 +1,4 @@
-import api from "./api";
+import api from "./api.js";
 
 export async function voteInPoll(pollId: number | string, opitionId: number | string) {
     const response = await api.post(`/polls/${pollId}/vote`, {
