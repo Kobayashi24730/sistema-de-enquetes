@@ -8,6 +8,7 @@ import Editar from '@/pages/Editar.jsx';
 import {AuthProvider} from "@/context/AuthContext.jsx";
 import EnqueteDetalhe from "@/pages/EnqueteDetalhe.jsx";
 import ForgotPassword from "@/pages/ForgotPassword.jsx";
+import ResetPassword from "@/pages/ResetPassword.jsx";
 import { Toaster} from "react-hot-toast";
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
                             <Route path="/enquete/:id" element={<EnqueteDetalhe />} />
                             <Route path="/editar/:id" element={<Editar />} />
                             <Route path="/forgot-password" element={<ForgotPassword />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
                         </Routes>
                     </main>
                 </div>
