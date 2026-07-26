@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Header from '@/components/Header.jsx';
+import Notfound from './pages/Notfound';
 import Home from '@/pages/Home.jsx';
 import Auth from '@/pages/Auth.jsx';
 import Perfil from '@/pages/Perfil.jsx';
@@ -8,7 +9,7 @@ import Editar from '@/pages/Editar.jsx';
 import {AuthProvider} from "@/context/AuthContext.jsx";
 import EnqueteDetalhe from "@/pages/EnqueteDetalhe.jsx";
 import ForgotPassword from "@/pages/ForgotPassword.jsx";
-import ResetPassword from "@/pages/ResetPassowrd.jsx";
+import ResetPassword from "@/pages/ResetPassoword.jsx";
 import { Toaster} from "react-hot-toast";
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
                             <Route path="/editar/:id" element={<Editar />} />
                             <Route path="/forgot-password" element={<ForgotPassword />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
+                            <Route path="*" element={<Notfound />} />
                         </Routes>
                     </main>
                 </div>

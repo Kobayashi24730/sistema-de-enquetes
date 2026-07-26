@@ -23,7 +23,7 @@ export default function ResetPassword() {
             const response = await api.post('/reset-password', { token, password });
             toast.dismiss(loadingToast);
             toast.success(response.data.message || 'Senha alterada com sucesso!');
-            navigate('/login');
+            navigate('/auth');
         } catch (error) {
             toast.dismiss(loadingToast);
             const errorMessage = error.response?.data?.error || 'Erro ao redefinir a senha.';

@@ -2,40 +2,39 @@ CREATE DATABASE IF NOT EXISTS enquete_db CHARACTER SET utf8mb4 COLLATE utf8mb4_u
 USE enquete_db;
 
 CREATE TABLE IF NOT EXISTS users (
-                                     id INT AUTO_INCREMENT PRIMARY KEY,
-                                     name VARCHAR(100) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+);
 
-CREATE TABLE IF NOT EXISTS polls (
-                                     id INT AUTO_INCREMENT PRIMARY KEY,
-                                     user_id INT NOT NULL,
-                                     title VARCHAR(255) NOT NULL,
+CREATE TABLE IF NOT EXISTS enquetes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
     description TEXT NULL,
     category VARCHAR(50) DEFAULT 'Geral',
     expires_at DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    );
+);
 
--- Tabela de Opções da Enquete
-CREATE TABLE IF NOT EXISTS poll_options (
-                                            id INT AUTO_INCREMENT PRIMARY KEY,
-                                            poll_id INT NOT NULL,
-                                            option_text VARCHAR(255) NOT NULL,
+CREATE TABLE IF NOT EXISTS enquetes_options (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    poll_id INT NOT NULL,
+    option_text VARCHAR(255) NOT NULL,
     FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE
-    );
+);
 
-CREATE TABLE IF NOT EXISTS votes (
-                                     id INT AUTO_INCREMENT PRIMARY KEY,
-                                     poll_id INT NOT NULL,
-                                     option_id INT NOT NULL,
-                                     user_id INT NOT NULL,
-                                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                     UNIQUE KEY unique_user_poll_vote (poll_id, user_id),
+CREATE TABLE IF NOT EXISTS enquete_votos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    poll_id INT NOT NULL,
+    option_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_user_poll_vote (poll_id, user_id),
     FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE,
     FOREIGN KEY (option_id) REFERENCES poll_options(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    );
+);

@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Clock, User2, BarChart3, ChevronRight, CheckCircle2 } from "lucide-react";
 import Resultados from "@/components/Resultados.jsx";
-import { getVotedPolls } from "@/hooks/useRealTime"; // Importe a função do localStorage
+import { getVotedEnquete } from "@/hooks/useRealTime";
 
+
+// Card de Enquete
 export default function Card({ enquete }) {
     if (!enquete) {
         return (
@@ -12,9 +14,9 @@ export default function Card({ enquete }) {
         );
     }
 
-    // 1. Verifica se o usuário já votou (via prop injetada pelo hook ou direto do localStorage)
-    const votedPolls = getVotedPolls();
-    const hasVoted = enquete.hasVoted ?? votedPolls.includes(enquete.id);
+    // 1. Verifica pelo hook se o usuário já votou
+    const votedEnquete = getVotedEnquetes();
+    const hasVoted = enquete.hasVoted ?? votedEnquete.includes(enquete.id);
 
     // Apenas verifica se já encerrou
     const isExpired = enquete.expires_at ? new Date(enquete.expires_at) < new Date() : false;
@@ -68,9 +70,7 @@ export default function Card({ enquete }) {
                             {enquete.title}
                         </h3>
                         {enquete.description && (
-                            <p className="line-clamp-2 text-xs text-neutral-500 font-normal leading-relaxed">
-                                {enquete.description}
-                            </p>
+                            <p className="line-clamp-2 text-xs text-neutral-500 font-normal leading-relaxed">{enquete.description}</p>
                         )}
                     </div>
 
@@ -80,7 +80,7 @@ export default function Card({ enquete }) {
                     </div>
                 </div>
 
-                {/* Rodapé com Informações de Votos / Data e Ação Dinâmica */}
+                {/* Rodapé com Informações de votos e data */}
                 <div className="mt-5 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
                     <div className="flex items-center gap-3">
                         <span className="inline-flex items-center gap-1 font-medium text-neutral-700">
@@ -96,7 +96,7 @@ export default function Card({ enquete }) {
                         )}
                     </div>
 
-                    {/* Texto de ação muda dinamicamente dependendo se já votou ou se expirou */}
+                    {/* Texto de ação que muda dinamicamente dependendo se ja votou ou se expirou */}
                     <span className="inline-flex items-center gap-0.5 text-blue-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                         {hasVoted || isExpired ? "Ver resultados" : "Votar"} <ChevronRight className="size-3.5" />
                     </span>

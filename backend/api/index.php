@@ -50,6 +50,7 @@ try {
     $pollController = new Controllers\PollController();
     $votoController = new Controllers\VotoController(); // Descomente se usar esta classe
     $forgotPasswordController = new Controllers\ForgotPasswordController();
+    $streamController = new Controllers\StreamController();
 } catch (\Throwable $e) {
     http_response_code(500);
     echo json_encode([
@@ -63,6 +64,13 @@ try {
 
 // 5. Roteamento da Aplicação
 switch ($route) {
+    case 'stream':
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $stream = new StreamController();
+            $stream->stream();
+        }
+    break;
+
     case '/login':
         if ($method === 'POST') {
             $userController->login();
@@ -137,6 +145,7 @@ switch ($route) {
     case '/enquetes/vote':
         if ($method === 'POST') {
             if (isset($votoController)) {
+                RateLimitMiddleware::check(5,60);
                 $votoController->vote();
             } else {
                 http_response_code(500);

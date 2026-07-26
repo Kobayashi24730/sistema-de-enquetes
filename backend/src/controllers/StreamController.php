@@ -13,8 +13,12 @@ class StreamController {
         header('X-Accel-Buffering: no');
 
         $db = Database::getConnection();
-
+        $startTime = time();
+        $maxDuration = 300;
         while (true) {
+            if (time() - startTime > maxDuration) {
+                break;
+            }
             $stmt = $db->prepare("
                 SELECT po.id, po.option_text, COUNT(v.id) as votes
                 FROM poll_options po

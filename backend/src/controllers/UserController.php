@@ -23,6 +23,18 @@ class UserController {
         $email = $data['email'] ?? null;
         $senha = $data['senha'] ?? $data['password'] ?? null;
 
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Email inválido']);
+            return;
+        }
+
+        if (strlen($password) < 6) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Senha deve ter no mínimo 6 caracteres']);
+            return;
+        }
+
         if (empty($nome) || empty($email) || empty($senha)) {
             http_response_code(400);
             echo json_encode(['error' => 'Nome, e-mail e senha são obrigatórios.']);

@@ -27,3 +27,21 @@ class AuthMiddleware {
         }
     }
 }
+
+class RateLimitMiddleware {
+    public static function check(int $maxRequests = 10, int $windowSeconds = 60): void {
+        $ip = $_SERVER['REMOTE_ADDR'];
+        $key = "rate_limit:{$ip}:" . date('YmdHi');
+
+        $file = sys_get_temp_dir() . '/' . md5($key);
+        $count = file_exists($file) ? (int)file_get_contents($file) : 0;
+
+        if ($count >= $maxRequests) {
+            http_response_code(429);
+            echo json_encode(['error' => 'Muitas requisicoes. Tente novamente em 1 minuto.']);
+            exit;
+        }
+
+        file_put_contents($file, $count + 1);
+    }
+}

@@ -1,0 +1,83 @@
+{
+  "info": {
+    "name": "Sistema de Enquetes API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Teste\",\"email\":\"teste@email.com\",\"password\":\"123456\"}"
+            },
+            "url": {"raw": "{{baseUrl}}/register", "host": ["{{baseUrl}}"], "path": ["register"]}
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"teste@email.com\",\"password\":\"123456\"}"
+            },
+            "url": {"raw": "{{baseUrl}}/login", "host": ["{{baseUrl}}"], "path": ["login"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Enquetes",
+      "item": [
+        {
+          "name": "Listar Enquetes",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{baseUrl}}/enquetes", "host": ["{{baseUrl}}"], "path": ["enquetes"]}
+          }
+        },
+        {
+          "name": "Criar Enquete",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"Minha Enquete\",\"description\":\"Teste\",\"category\":\"Geral\",\"options\":[\"Opcao 1\",\"Opcao 2\",\"Opcao 3\"]}"
+            },
+            "url": {"raw": "{{baseUrl}}/enquetes", "host": ["{{baseUrl}}"], "path": ["enquetes"]}
+          }
+        },
+        {
+          "name": "Votar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"poll_id\":1,\"option_id\":1}"
+            },
+            "url": {"raw": "{{baseUrl}}/enquetes/vote", "host": ["{{baseUrl}}"], "path": ["enquetes", "vote"]}
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:8000"},
+    {"key": "token", "value": ""}
+  ]
+}
