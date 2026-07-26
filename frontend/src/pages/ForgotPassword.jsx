@@ -12,23 +12,23 @@ export default function ForgotPassword() {
         const loadingToast = toast.loading('Enviando e-mail...');
 
         try {
+            // 1. O Axios faz o POST e já converte a resposta JSON em objeto
             const response = await api.post('/forgot-password', { email });
-            const data = await response.json();
 
-            // Remove a mensagem de carregamento
+            // Remove o toast de carregamento
             toast.dismiss(loadingToast);
 
-            if (response.ok) {
-                // Substitui: alert("Instruções enviadas!")
-                toast.success(data.message || 'Instruções enviadas para o seu e-mail!');
-                setEmail('');
-            } else {
-                // Substitui: alert("Erro: " + data.error)
-                toast.error(data.error || 'Ocorreu um erro ao solicitar.');
-            }
+            // 2. Se chegou aqui, o status é 2xx (Sucesso)
+            // Os dados do PHP estarão dentro de response.data
+            toast.success(response.data.message || 'Instruções enviadas para o seu e-mail!');
+            setEmail('');
+
         } catch (error) {
             toast.dismiss(loadingToast);
-            toast.error('Erro de conexão com o servidor.');
+
+            // 3. Se o PHP respondeu com erro (400, 500, etc), a mensagem estará em error.response.data
+            const errorMessage = error.response?.data?.error || 'Erro de conexão com o servidor.';
+            toast.error(errorMessage);
         }
     };
 
