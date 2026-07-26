@@ -83,12 +83,12 @@ switch ($route) {
         break;
 
     case '/reset-password':
-    case '/forgot-password'
+    case '/forgot-password':
         if ($method === 'POST') {
-            (new ForgotPasswordController())->resetPassword();
+            $forgotPasswordController->resetPassword();
         } else {
             http_response_code(405);
-            echo json_encode(['error' => 'Método não permitido']);
+            echo json_encode(['error' => 'Método não permitido. Use POST.']);
         }
         break;
 
