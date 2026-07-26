@@ -48,7 +48,7 @@ try {
 
     $userController = new Controllers\UserController($pdo);
     $pollController = new Controllers\PollController();
-    // $votoController = new Controllers\VotoController(); // Descomente se usar esta classe
+    $votoController = new Controllers\VotoController(); // Descomente se usar esta classe
 } catch (\Throwable $e) {
     http_response_code(500);
     echo json_encode([
