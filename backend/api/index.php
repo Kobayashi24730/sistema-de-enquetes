@@ -82,7 +82,8 @@ switch ($route) {
         }
         break;
 
-    case '/api/reset-password':
+    case '/reset-password':
+    case '/forgot-password'
         if ($method === 'POST') {
             (new ForgotPasswordController())->resetPassword();
         } else {
