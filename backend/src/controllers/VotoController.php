@@ -4,7 +4,7 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-class EnqueteController {
+class VotoController {
 
     // POST /enquetes/vote - Computar Voto
     public function vote() {
