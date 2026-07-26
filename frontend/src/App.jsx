@@ -2,7 +2,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Header from '@/components/Header';
 import Home from '@/pages/Home';
 import Auth from '@/pages/Auth';
-import {AuthProvider} from "@/context/AuthContext.jsx";
+import Perfil from '@/pages/Perfil';
+import Criar from '@/pages/Criar';
+import {AuthProvider} from "@/context/AuthContext";
+import EnqueteDetalhe from "@/pages/enqueteDetalhe";
 
 export default function App() {
     return (
@@ -14,6 +17,9 @@ export default function App() {
                         <Routes>
                             <Route path="/" element={<Home />} />
                             <Route path="/auth" element={<Auth />} />
+                            <Route path="/perfil" element={<Perfil />} />
+                            <Route path="/criar" element={<Criar />} />
+                            <Route path="/enquete/:id" element={<EnqueteDetalhe />} />
                         </Routes>
                     </main>
                 </div>

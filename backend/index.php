@@ -22,29 +22,29 @@ $dotenv->safeLoad();
 $method = $_SERVER['REQUEST_METHOD'];
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// Ajusta a rota removendo barras extras do final
 $route = rtrim($uri, '/');
 if (empty($route)) {
     $route = '/';
 }
 
-// 4. Conexão com o Banco de Dados via Singleton e Instância do Controller
 try {
-    // Chama o método estático da sua classe Config\Database
     $pdo = \Config\Database::getConnection();
-
-    // Instancia o Controller passando a conexão PDO
+    \Config\Migration::run($pdo);
     $userController = new Controllers\UserController($pdo);
+    $pollController = new Controllers\PollController();
 } catch (\Throwable $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Erro interno de inicialização no servidor.']);
+    echo json_encode([
+        'error' => 'Erro de inicialização',
+        'details' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-// 5. Mapeamento de Rotas
-switch ($route) {
 
-    // === ROTA DE LOGIN ===
+switch ($route) {
     case '/login':
         if ($method === 'POST') {
             $userController->login();
@@ -54,7 +54,6 @@ switch ($route) {
         }
         break;
 
-    // === ROTA DE CADASTRO (Mapeia tanto /register quanto /usuarios) ===
     case '/register':
     case '/usuarios':
         if ($method === 'POST') {
@@ -65,7 +64,6 @@ switch ($route) {
         }
         break;
 
-    // === ROTA DE PERFIL PROTEGIDA (Mapeia tanto /profile quanto /perfil) ===
     case '/profile':
     case '/perfil':
         if ($method === 'GET') {
@@ -77,7 +75,39 @@ switch ($route) {
         }
         break;
 
-    // === ROTA PADRÃO / 404 ===
+    // ==========================================
+    // ROTA PÚBLICA
+    // ==========================================
+    case '/enquetes':
+        if ($method === 'GET') {
+            $pollController->index();
+        } elseif ($method === 'POST') {
+            // Rota protegida: Criar enquete
+            $pollController->create();
+        }
+        break;
+
+    case '/enquetes/show':
+        if ($method === 'GET') {
+            $pollController->show();
+        }
+        break;
+
+    // ==========================================
+    // ROTA PROTEGIDA
+    // ==========================================
+    case '/enquetes/vote':
+        if ($method === 'POST') {
+            $pollController->vote();
+        }
+        break;
+
+    case '/enquetes/delete':
+        if ($method === 'DELETE') {
+            $pollController->delete();
+        }
+        break;
+
     default:
         http_response_code(404);
         echo json_encode(['error' => "Rota '{$route}' não encontrada."]);

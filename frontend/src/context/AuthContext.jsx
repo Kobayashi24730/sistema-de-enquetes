@@ -45,8 +45,6 @@ export function AuthProvider({ children }) {
 
             // 2. Seta o header padrão do Axios para as próximas chamadas
             api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-            // 3. Atualiza o estado
             setUser(userData);
         } catch (error) {
             console.error("Erro dentro do AuthContext -> login:", error);

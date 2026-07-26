@@ -1,36 +1,27 @@
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import Card from '@/components/Cards';
-
-const mockPolls = [
-    {
-        id: "1",
-        category: 'Cultura',
-        authorName: 'Ana Ribeiro',
-        title: 'Café ou chá durante o code review?',
-        description: 'Escolha sua bebida favorita.',
-        options: [
-            { id: "101", text: 'Café', votes: 104 },
-            { id: "102", text: 'Chá', votes: 45 },
-            { id: "103", text: 'Água', votes: 43 },
-        ],
-    },
-    {
-        id: "2",
-        category: 'Trabalho',
-        authorName: 'Caio Lopes',
-        title: 'Modelo de trabalho ideal',
-        description: 'Como você prefere trabalhar no dia a dia?',
-        options: [
-            { id: "201", text: '100% remoto', votes: 115 },
-            { id: "202", text: 'Híbrido', votes: 70 },
-            { id: "203", text: 'Presencial', votes: 31 },
-        ],
-    },
-];
+import {Search} from "lucide-react";
+import api from '@/services/api';
 
 export default function Home() {
-    const [destaque] = useState(mockPolls[0].title);
-    const [votos] = useState(mockPolls[0].options[0].votes);
+    const [enquetes, setEnquetes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    console.log(enquetes);
+
+    const carregarEnquetes = async () => {
+        try {
+            const response = await api.get('/enquetes');
+            setEnquetes(response.data);
+        } catch (error) {
+            console.error('Erro ao carregar enquetes:', error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        carregarEnquetes();
+    }, []);
 
     return (
         <section className="p-6 max-w-6xl mx-auto space-y-8">
@@ -42,15 +33,38 @@ export default function Home() {
                     Crie enquetes com até 8 opções, vote e acompanhe cada novo voto em tempo real.
                 </p>
                 <div className="inline-block mt-2 rounded-lg bg-muted px-3 py-1 text-sm font-medium">
-                    Em destaque agora: <span className="text-primary font-semibold">{destaque}</span> com <span className="text-primary font-semibold">{votos}</span> votos.
+                    Em destaque agora: <span className="text-primary font-semibold">ola</span> com <span className="text-primary font-semibold">1213</span> votos.
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {mockPolls.map((poll) => (
-                    <Card key={poll.id} poll={poll} />
-                ))}
+            <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 text-sm">
+                    <Search className="size-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Procurar enquete</span>
+                </div>
+                <button className="text-sm text-muted-foreground rounded-lg px-3 py-1.5 border border-slate-800 hover:bg-slate-800/10 transition-colors">
+                    todas as categorias
+                </button>
+                <div className="flex gap-2 text-sm">
+                    <button className="px-3 py-1.5 rounded-lg bg-muted font-medium">
+                        recentes
+                    </button>
+                    <button className="px-3 py-1.5 rounded-lg text-muted-foreground hover:bg-muted/50">
+                        populares
+                    </button>
+                </div>
             </div>
+            {loading ? (
+                <p className="text-muted-foreground">Carregando enquetes...</p>
+            ) : enquetes && enquetes.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {enquetes.map((i) => (
+                        <Card key={i.id} enquete={i} />
+                    ))}
+                </div>
+            ) : (
+                <p>Nenhum enquete encontrado</p>
+            )}
         </section>
     );
 }
