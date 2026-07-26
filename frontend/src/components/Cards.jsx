@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import { Clock, User2, BarChart3, ChevronRight } from "lucide-react";
+import { Clock, User2, BarChart3, ChevronRight, CheckCircle2 } from "lucide-react";
 import Resultados from "@/components/Resultados.jsx";
+import { getVotedPolls } from "@/hooks/usePollsRealtime"; // Importe a função do localStorage
 
 export default function Card({ enquete }) {
-    console.log(enquete);
     if (!enquete) {
         return (
             <div className="p-6 text-center rounded-lg border border-dashed border-neutral-200 bg-neutral-50 text-neutral-500 text-sm">
@@ -11,6 +11,10 @@ export default function Card({ enquete }) {
             </div>
         );
     }
+
+    // 1. Verifica se o usuário já votou (via prop injetada pelo hook ou direto do localStorage)
+    const votedPolls = getVotedPolls();
+    const hasVoted = enquete.hasVoted ?? votedPolls.includes(enquete.id);
 
     // Apenas verifica se já encerrou
     const isExpired = enquete.expires_at ? new Date(enquete.expires_at) < new Date() : false;
@@ -26,16 +30,24 @@ export default function Card({ enquete }) {
                 className="group flex flex-col justify-between h-full p-5 rounded-xl border border-neutral-200/80 bg-white shadow-sm transition-all duration-200 hover:border-neutral-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
             >
                 <div className="space-y-3">
-                    {/* Categoria / Criador */}
+                    {/* Categoria / Status de Voto / Encerrada */}
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                             {enquete.category && (
                                 <span className="rounded-md bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-600 border border-neutral-200/60">
                                     {enquete.category}
                                 </span>
                             )}
 
-                            {/* Mostra apenas se estiver encerrada */}
+                            {/* Badge de "Já Votou" */}
+                            {hasVoted && (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200/60">
+                                    <CheckCircle2 className="size-3 text-emerald-600" />
+                                    Votado
+                                </span>
+                            )}
+
+                            {/* Badge de Encerrada */}
                             {isExpired && (
                                 <span className="rounded-md bg-neutral-100 px-2.5 py-0.5 text-neutral-500 font-medium">
                                     Encerrada
@@ -68,7 +80,7 @@ export default function Card({ enquete }) {
                     </div>
                 </div>
 
-                {/* Rodapé com Informações de Votos / Data */}
+                {/* Rodapé com Informações de Votos / Data e Ação Dinâmica */}
                 <div className="mt-5 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
                     <div className="flex items-center gap-3">
                         <span className="inline-flex items-center gap-1 font-medium text-neutral-700">
@@ -84,8 +96,9 @@ export default function Card({ enquete }) {
                         )}
                     </div>
 
+                    {/* Texto de ação muda dinamicamente dependendo se já votou ou se expirou */}
                     <span className="inline-flex items-center gap-0.5 text-blue-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                        Votar <ChevronRight className="size-3.5" />
+                        {hasVoted || isExpired ? "Ver resultados" : "Votar"} <ChevronRight className="size-3.5" />
                     </span>
                 </div>
             </Link>

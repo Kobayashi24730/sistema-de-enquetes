@@ -5,6 +5,7 @@ import api from '../services/api.js';
 import { AuthContext } from '../context/AuthContext.jsx';
 import Resultados from '@/components/Resultados.jsx';
 import { Chart } from '@/components/Charts.jsx';
+import { getVotedPolls, saveVotedPoll } from '@/hooks/usePollsRealtime.js'; // Importa persistência local
 
 // Estilos Fluent estritamente claros
 const fluentCard =
@@ -23,9 +24,16 @@ export default function EnqueteDetalhe() {
     const [error, setError] = useState('');
     const [selectedOption, setSelectedOption] = useState(null);
     const [votedOptionId, setVotedOptionId] = useState(null);
+    const [hasVotedLocal, setHasVotedLocal] = useState(false);
     const [voting, setVoting] = useState(false);
 
     useEffect(() => {
+        // Checa no localStorage assim que abre a página
+        const localVotes = getVotedPolls();
+        if (localVotes.includes(id) || localVotes.includes(Number(id))) {
+            setHasVotedLocal(true);
+        }
+
         fetchPoll();
     }, [id]);
 
@@ -36,6 +44,7 @@ export default function EnqueteDetalhe() {
 
             if (response.data.voted_option_id) {
                 setVotedOptionId(response.data.voted_option_id);
+                setHasVotedLocal(true);
             }
         } catch (err) {
             console.error('Erro ao buscar enquete:', err);
@@ -51,12 +60,18 @@ export default function EnqueteDetalhe() {
 
         setVoting(true);
         try {
+            // Envia para o backend (payload: poll_id / option_id)
             await api.post('/enquetes/vote', {
-                enquete_id: id,
+                poll_id: id,
                 option_id: selectedOption
             });
 
+            // 1. Grava no localStorage do navegador para bloquear votos futuros
+            saveVotedPoll(id);
+            setHasVotedLocal(true);
             setVotedOptionId(selectedOption);
+
+            // 2. Recarrega os dados da enquete para atualizar contagens
             await fetchPoll();
         } catch (err) {
             alert(err.response?.data?.error || 'Erro ao registrar seu voto.');
@@ -108,7 +123,9 @@ export default function EnqueteDetalhe() {
 
     const isExpired = poll.expires_at ? new Date(poll.expires_at) < new Date() : false;
     const isOwner = Boolean(user && poll && (Number(user.id) === Number(poll.user_id) || user.nome === poll.criador));
-    const canVote = Boolean(user && !votedOptionId && !isExpired);
+
+    // Pode votar se: NÃO tiver expirado E NÃO tiver votado antes (nem localmente nem na API)
+    const canVote = !hasVotedLocal && !votedOptionId && !isExpired;
 
     return (
         <div className="max-w-3xl mx-auto space-y-5 p-4 text-neutral-900 md:p-6 font-sans">
@@ -134,6 +151,13 @@ export default function EnqueteDetalhe() {
                         {isExpired && (
                             <span className="rounded bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500">
                                 Encerrada
+                            </span>
+                        )}
+
+                        {hasVotedLocal && (
+                            <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200/60">
+                                <CheckCircle2 className="size-3 text-emerald-600" />
+                                Votado
                             </span>
                         )}
                     </div>
@@ -165,8 +189,8 @@ export default function EnqueteDetalhe() {
                 </div>
             </div>
 
-            {/* Formulário de Votação */}
-            {canVote && (
+            {/* Formulário de Votação (Apenas se canVote === true) */}
+            {canVote ? (
                 <form onSubmit={handleVote} className={fluentCard}>
                     <h2 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
                         Opções de Voto
@@ -208,14 +232,14 @@ export default function EnqueteDetalhe() {
                         {voting ? 'Computando voto...' : 'Confirmar Voto'}
                     </button>
                 </form>
-            )}
-
-            {/* Voto Confirmado */}
-            {votedOptionId && (
-                <div className="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50/70 p-3 text-xs font-medium text-emerald-800">
-                    <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
-                    Seu voto foi registrado com sucesso!
-                </div>
+            ) : (
+                /* Alerta de Voto Confirmado / Já Votou */
+                hasVotedLocal && (
+                    <div className="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50/70 p-3 text-xs font-medium text-emerald-800">
+                        <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+                        Seu voto foi registrado nesta enquete.
+                    </div>
+                )
             )}
 
             {/* Painel de Resultados em Barras */}
