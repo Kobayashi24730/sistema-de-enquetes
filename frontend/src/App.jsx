@@ -4,9 +4,9 @@ import Home from '@/pages/Home.jsx';
 import Auth from '@/pages/Auth.jsx';
 import Perfil from '@/pages/Perfil.jsx';
 import Criar from '@/pages/Criar.jsx';
-import Editar from '@/pages/editar.jsx';
+import Editar from '@/pages/Editar.jsx';
 import {AuthProvider} from "@/context/AuthContext.jsx";
-import EnqueteDetalhe from "@/pages/enqueteDetalhe.jsx";
+import EnqueteDetalhe from "@/pages/EnqueteDetalhe.jsx";
 
 export default function App() {
     return (
