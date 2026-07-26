@@ -47,7 +47,7 @@ class ForgotPasswordController {
             $stmtReset->execute([$email, $token, $expiresAt]);
 
             // 4. Envia o e-mail com o link de recuperação
-            $link = "https://sistema-de-enquetes-frontend-emw2lt4gu-kobayashi24730s-projects.vercel.app/reset-password?token=" . $token;
+            $link = "https://sistema-de-enquetes-frontend-ackbbodyz-kobayashi24730s-projects.vercel.app/reset-password?token=" . $token;
 
             $mailSent = $this->sendResetEmail($email, $user['name'], $link);
 
