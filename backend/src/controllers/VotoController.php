@@ -125,4 +125,4 @@ class VotoController {
             error_log("Erro no envio do e-mail de notificação: " . $mail->ErrorInfo);
         }
     }
-}a
+}
