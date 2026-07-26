@@ -10,8 +10,10 @@
   "autoload": {
     "psr-4": {
       "Controllers\\": "src/controllers/",
-      "Middlewares\\": "src/middlewares/",
-      "Config\\": "src/config/"
+      "Middlewares\\": "src/Middlewares/",
+      "Config\\": "src/config/",
+      "Models\\": "src/models/",
+      "Services\\": "src/services/"
     }
   }
 }
