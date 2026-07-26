@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import toast from 'react-hot-toast'; // Importa o toast
+import toast from 'react-hot-toast';
+import api from '../services/api';
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
@@ -11,7 +12,7 @@ export default function ForgotPassword() {
         const loadingToast = toast.loading('Enviando e-mail...');
 
         try {
-            const response = await fetch('/api/forgot-password', {
+            const response = await api.post('/api/forgot-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),

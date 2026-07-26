@@ -49,6 +49,7 @@ try {
     $userController = new Controllers\UserController($pdo);
     $pollController = new Controllers\PollController();
     $votoController = new Controllers\VotoController(); // Descomente se usar esta classe
+    $forgotPasswordController = new Controllers\ForgotPasswordController();
 } catch (\Throwable $e) {
     http_response_code(500);
     echo json_encode([
@@ -78,6 +79,15 @@ switch ($route) {
         } else {
             http_response_code(405);
             echo json_encode(['error' => 'Método não permitido para /register. Use POST.']);
+        }
+        break;
+
+    case '/api/reset-password':
+        if ($method === 'POST') {
+            (new ForgotPasswordController())->resetPassword();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Método não permitido']);
         }
         break;
 
