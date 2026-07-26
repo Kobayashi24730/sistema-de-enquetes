@@ -4,7 +4,8 @@
   "type": "project",
   "require": {
     "vlucas/phpdotenv": "^5.5",
-    "firebase/php-jwt": "^7.0"
+    "firebase/php-jwt": "^7.0",
+    "phpmailer/phpmailer": "^7.1"
   },
   "autoload": {
     "psr-4": {

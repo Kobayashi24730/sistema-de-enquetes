@@ -3,6 +3,7 @@ import { Clock, User2, BarChart3, ChevronRight } from "lucide-react";
 import Resultados from "@/components/Resultados";
 
 export default function Card({ enquete }) {
+    console.log(enquete);
     if (!enquete) {
         return (
             <div className="p-6 text-center rounded-lg border border-dashed border-neutral-200 bg-neutral-50 text-neutral-500 text-sm">

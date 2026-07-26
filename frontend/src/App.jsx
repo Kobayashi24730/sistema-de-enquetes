@@ -4,6 +4,7 @@ import Home from '@/pages/Home';
 import Auth from '@/pages/Auth';
 import Perfil from '@/pages/Perfil';
 import Criar from '@/pages/Criar';
+import Editar from '@/pages/editar';
 import {AuthProvider} from "@/context/AuthContext";
 import EnqueteDetalhe from "@/pages/enqueteDetalhe";
 
@@ -20,6 +21,7 @@ export default function App() {
                             <Route path="/perfil" element={<Perfil />} />
                             <Route path="/criar" element={<Criar />} />
                             <Route path="/enquete/:id" element={<EnqueteDetalhe />} />
+                            <Route path="/editar/:id" element={<Editar />} />
                         </Routes>
                     </main>
                 </div>

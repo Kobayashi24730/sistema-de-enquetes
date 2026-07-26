@@ -8,38 +8,38 @@ use PDO;
 class PollController {
 
 // GET /enquetes - Listar todas as enquetes (PÚBLICO)
-    public function index() {
-        try {
-            $db = Database::getConnection();
+        public function index() {
+            try {
+                $db = Database::getConnection();
 
-            // Consulta ajustada sem a coluna 'expires_at' que causava o erro 500
-            $query = "SELECT e.id, e.title, e.description, e.created_at, u.name AS criador
-                      FROM enquetes e
-                      JOIN users u ON e.user_id = u.id
-                      ORDER BY e.created_at DESC";
+                // Consulta ajustada sem a coluna 'expires_at' que causava o erro 500
+                $query = "SELECT e.id, e.title, e.description, e.created_at,COALESCE(e.category, 'Geral') AS category, u.name AS criador
+                          FROM enquetes e
+                          JOIN users u ON e.user_id = u.id
+                          ORDER BY e.created_at DESC";
 
-            $stmt = $db->prepare($query);
-            $stmt->execute();
-            $enquetes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $stmt = $db->prepare($query);
+                $stmt->execute();
+                $enquetes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Prepara a busca das opções de cada enquete
-            $stmtOpt = $db->prepare("SELECT id, option_text, votes FROM enquetes_options WHERE enquete_id = ?");
+                // Prepara a busca das opções de cada enquete
+                $stmtOpt = $db->prepare("SELECT id, option_text, votes FROM enquetes_options WHERE enquete_id = ?");
 
-            foreach ($enquetes as &$enquete) {
-                $stmtOpt->execute([$enquete['id']]);
-                $options = $stmtOpt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($enquetes as &$enquete) {
+                    $stmtOpt->execute([$enquete['id']]);
+                    $options = $stmtOpt->fetchAll(PDO::FETCH_ASSOC);
 
-                $enquete['options'] = $options;
-                $enquete['total_votes'] = array_sum(array_column($options, 'votes'));
+                    $enquete['options'] = $options;
+                    $enquete['total_votes'] = array_sum(array_column($options, 'votes'));
+                }
+
+                http_response_code(200);
+                echo json_encode($enquetes);
+            } catch (\Exception $e) {
+                http_response_code(500);
+                echo json_encode(['error' => 'Erro ao buscar enquetes: ' . $e->getMessage()]);
             }
-
-            http_response_code(200);
-            echo json_encode($enquetes);
-        } catch (\Exception $e) {
-            http_response_code(500);
-            echo json_encode(['error' => 'Erro ao buscar enquetes: ' . $e->getMessage()]);
         }
-    }
 
     // GET /enquetes/show?id=1 - Exibir uma enquete com suas opções (PÚBLICO)
     public function show($id = null) {
@@ -70,6 +70,18 @@ class PollController {
             $stmtOpt->execute([$pollId]);
             $enquete['options'] = $stmtOpt->fetchAll(PDO::FETCH_ASSOC);
 
+            // 3. Verifica se o usuário já votou na enquete
+            $user = AuthMiddleware::authenticate();
+            $votedOptionId = null;
+            if ($user) {
+                $stmt = $db->prepare("SELECT option_id FROM enquete_votos WHERE poll_id = ? AND user_id = ?");
+                $stmt->execute([$pollId, $user['id']]);
+                $vote = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($vote) {
+                    $votedOptionId = $vote['option_id'];
+                }
+            }
+            $enquete['voted_option_id'] = $votedOptionId;
             http_response_code(200);
             echo json_encode($enquete);
         } catch (\Exception $e) {
@@ -100,12 +112,13 @@ class PollController {
         $db->beginTransaction();
 
         try {
-            // Ajustado para 'enquetes' (plural)
-            $stmt = $db->prepare("INSERT INTO enquetes (user_id, title, description) VALUES (?, ?, ?)");
+            $stmt = $db->prepare("INSERT INTO enquetes (user_id, title, description, category) VALUES (?, ?, ?, ?)");
+            $category = !empty($data['category']) ? $data['category'] : 'Geral';
             $stmt->execute([
                 $user['id'],
                 $data['title'],
-                $data['description'] ?? null
+                $data['description'] ?? null,
+                $category
             ]);
             $pollId = $db->lastInsertId();
 
@@ -126,29 +139,88 @@ class PollController {
         }
     }
 
-    // POST /enquetes/vote - Registrar Voto (PROTEGIDO POR JWT)
-    public function vote() {
+    // PUT /enquetes/update?id=8 - Atualizar Enquete
+    public function update($id = null) {
+        // Se o $id não foi passado direto na função, tenta pegar do $_GET['id']
+        if (!$id && isset($_GET['id'])) {
+            $id = $_GET['id'];
+        }
+
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID da enquete é obrigatório']);
+            return;
+        }
+
         $user = AuthMiddleware::authenticate();
         $data = json_decode(file_get_contents('php://input'), true);
 
-        if (empty($data['option_id']) || empty($data['poll_id'])) {
+        if (empty($data['title']) || empty($data['options']) || !is_array($data['options'])) {
             http_response_code(400);
-            echo json_encode(['error' => 'Selecione uma opção e informe a enquete.']);
+            echo json_encode(['error' => 'Título e opções são obrigatórios']);
+            return;
+        }
+
+        $countOptions = count($data['options']);
+        if ($countOptions < 2 || $countOptions > 8) {
+            http_response_code(400);
+            echo json_encode(['error' => 'A enquete deve ter entre 2 e 8 opções']);
             return;
         }
 
         $db = Database::getConnection();
+        $db->beginTransaction();
 
         try {
-            // Incrementa a contagem na tabela 'enquetes_options'
-            $stmt = $db->prepare("UPDATE enquetes_options SET votes = votes + 1 WHERE id = ? AND enquete_id = ?");
-            $stmt->execute([$data['option_id'], $data['poll_id']]);
+            // 1. Verifica se a enquete existe e pertence ao usuário
+            $stmtCheck = $db->prepare("SELECT user_id FROM enquetes WHERE id = ?");
+            $stmtCheck->execute([$id]);
+            $enquete = $stmtCheck->fetch(PDO::FETCH_ASSOC);
 
+            if (!$enquete) {
+                $db->rollBack();
+                http_response_code(404);
+                echo json_encode(['error' => 'Enquete não encontrada']);
+                return;
+            }
+
+            if ($enquete['user_id'] != $user['id']) {
+                $db->rollBack();
+                http_response_code(403);
+                echo json_encode(['error' => 'Você não tem permissão para editar esta enquete']);
+                return;
+            }
+
+            // 2. Atualiza dados principais
+            $category = !empty($data['category']) ? $data['category'] : 'Geral';
+
+            $stmtUpdate = $db->prepare("UPDATE enquetes SET title = ?, description = ?, category = ? WHERE id = ?");
+            $stmtUpdate->execute([
+                $data['title'],
+                $data['description'] ?? null,
+                $category,
+                $id
+            ]);
+
+            // 3. Atualiza opções (remove e insere novamente)
+            $stmtDeleteOpt = $db->prepare("DELETE FROM enquetes_options WHERE enquete_id = ?");
+            $stmtDeleteOpt->execute([$id]);
+
+            $stmtInsertOpt = $db->prepare("INSERT INTO enquetes_options (enquete_id, option_text) VALUES (?, ?)");
+            foreach ($data['options'] as $optionText) {
+                if (!empty(trim($optionText))) {
+                    $stmtInsertOpt->execute([$id, trim($optionText)]);
+                }
+            }
+
+            $db->commit();
             http_response_code(200);
-            echo json_encode(['message' => 'Voto computado com sucesso!']);
-        } catch (\PDOException $e) {
+            echo json_encode(['message' => 'Enquete atualizada com sucesso!']);
+
+        } catch (\Exception $e) {
+            $db->rollBack();
             http_response_code(500);
-            echo json_encode(['error' => 'Erro ao processar voto: ' . $e->getMessage()]);
+            echo json_encode(['error' => 'Erro ao atualizar enquete: ' . $e->getMessage()]);
         }
     }
 

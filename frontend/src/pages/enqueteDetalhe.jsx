@@ -1,20 +1,10 @@
 import { useEffect, useState, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Share2, Edit3, Trash2, User2, Clock, CheckCircle2, BarChart2 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
-import Resultados from '../components/Resultados';
-
-// Cores seguindo a paleta do Fluent UI (sem fundos escuros)
-const CHART_COLORS = [
-    '#0078D4', // Fluent Primary Blue
-    '#008272', // Teal
-    '#D13438', // Red/Orange
-    '#8764B8', // Purple
-    '#004E8C', // Dark Blue
-    '#498205', // Green
-];
+import Resultados from '@/components/Resultados';
+import { Chart } from '@/components/Charts';
 
 // Estilos Fluent estritamente claros
 const fluentCard =
@@ -117,13 +107,8 @@ export default function EnqueteDetalhe() {
     const totalVotes = options.reduce((acc, opt) => acc + Number(opt.votes ?? opt.votos ?? 0), 0);
 
     const isExpired = poll.expires_at ? new Date(poll.expires_at) < new Date() : false;
-    const isOwner = user && (Number(user.id) === Number(poll.user_id) || user.nome === poll.criador);
-    const canVote = user && !votedOptionId && !isExpired;
-
-    const chartData = options.map((opt) => ({
-        name: opt.option_text || opt.text || opt.opcao_texto,
-        value: Number(opt.votes ?? opt.votos ?? 0)
-    }));
+    const isOwner = Boolean(user && poll && (Number(user.id) === Number(poll.user_id) || user.nome === poll.criador));
+    const canVote = Boolean(user && !votedOptionId && !isExpired);
 
     return (
         <div className="max-w-3xl mx-auto space-y-5 p-4 text-neutral-900 md:p-6 font-sans">
@@ -233,7 +218,7 @@ export default function EnqueteDetalhe() {
                 </div>
             )}
 
-            {/* Painel de Resultados */}
+            {/* Painel de Resultados em Barras */}
             <div className={fluentCard}>
                 <div className="flex items-center justify-between border-b border-neutral-100 pb-2.5">
                     <h2 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
@@ -254,61 +239,8 @@ export default function EnqueteDetalhe() {
                 )}
             </div>
 
-            {/* Painel do Gráfico */}
-            <div className={fluentCard}>
-                <h2 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
-                    Distribuição dos Votos
-                </h2>
-
-                <div className="relative flex h-52 w-full items-center justify-center">
-                    {totalVotes > 0 ? (
-                        <>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={chartData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={2}
-                                        dataKey="value"
-                                    >
-                                        {chartData.map((_, index) => (
-                                            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <div className="pointer-events-none absolute flex flex-col items-center justify-center text-center">
-                                <span className="text-xl font-bold leading-none text-neutral-900">{totalVotes}</span>
-                                <span className="mt-1 text-[11px] font-medium text-neutral-500">votos</span>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="text-center text-xs text-neutral-400">
-                            Nenhum voto registrado para exibir o gráfico.
-                        </div>
-                    )}
-                </div>
-
-                {totalVotes > 0 && (
-                    <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 border-t border-neutral-100 pt-3">
-                        {chartData.map((entry, index) => (
-                            <span key={`chart-legend-${index}`} className="inline-flex items-center gap-1.5 text-xs text-neutral-600">
-                                <span
-                                    className="size-2 rounded-full"
-                                    style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
-                                />
-                                <span className="font-medium">{entry.name}</span>
-                                <span className="tabular-nums text-neutral-400">
-                                    ({totalVotes ? ((entry.value / totalVotes) * 100).toFixed(0) : 0}%)
-                                </span>
-                            </span>
-                        ))}
-                    </div>
-                )}
-            </div>
+            {/* Componente de Gráfico Donut/Pie */}
+            <Chart options={options} />
 
             {/* Barra de Ações do Rodapé */}
             <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
@@ -320,7 +252,7 @@ export default function EnqueteDetalhe() {
                 {isOwner && (
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => navigate(`/enquete/${id}/editar`)}
+                            onClick={() => navigate(`/editar/${id}`)}
                             className={fluentButtonSecondary}
                         >
                             <Edit3 className="size-3.5" />

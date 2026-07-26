@@ -1,27 +1,50 @@
-import {useEffect, useState} from 'react';
+import { useState } from 'react';
 import Card from '@/components/Cards';
-import {Search} from "lucide-react";
-import api from '@/services/api';
+import { Search } from "lucide-react";
+import { usePollsRealtime } from '@/hooks/useRealTime';
+import Filters from '@/components/Filters';
 
 export default function Home() {
-    const [enquetes, setEnquetes] = useState([]);
-    const [loading, setLoading] = useState(true);
-    console.log(enquetes);
+    const { polls, loading } = usePollsRealtime(8000);
+    const [search, setSearch] = useState('');
+    const safePolls = polls || [];
+    const [category, setCategory] = useState('todas');
+    const [sort, setSort] = useState("recentes");
+    const filteredPolls = safePolls.filter((item) =>
+        item.title?.toLowerCase().includes(search.toLowerCase())
+    );
 
-    const carregarEnquetes = async () => {
-        try {
-            const response = await api.get('/enquetes');
-            setEnquetes(response.data);
-        } catch (error) {
-            console.error('Erro ao carregar enquetes:', error);
-        } finally {
-            setLoading(false);
-        }
-    }
 
-    useEffect(() => {
-        carregarEnquetes();
-    }, []);
+    const processedPolls = safePolls
+        .filter((item) => {
+            // Filtro por termo de busca no título
+            const matchesSearch = item.title?.toLowerCase().includes(search.toLowerCase());
+
+            // Filtro por categoria
+            const matchesCategory = category === 'todas' || item.category?.toLowerCase() === category.toLowerCase();
+
+            return matchesSearch && matchesCategory;
+        })
+        .sort((a, b) => {
+            if (sort === 'populares') {
+                const votesA = (a.options || a.opcoes || []).reduce((acc, o) => acc + Number(o.votes || o.votos || 0), 0);
+                const votesB = (b.options || b.opcoes || []).reduce((acc, o) => acc + Number(o.votes || o.votos || 0), 0);
+                return votesB - votesA; // Mais votadas primeiro
+            }
+
+            // Ordenação padrão: Recentes
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+
+    // 4. Cálculo da enquete em destaque no cabeçalho
+    const topPoll = safePolls.reduce((max, item) => {
+        const totalVotes = (item.options || item.opcoes || []).reduce(
+            (acc, opt) => acc + Number(opt.votes || opt.votos || 0), 0
+        );
+        return totalVotes > (max.totalVotes || 0)
+            ? { title: item.title, totalVotes }
+            : max;
+    }, { title: 'Nenhuma', totalVotes: 0 });
 
     return (
         <section className="p-6 max-w-6xl mx-auto space-y-8">
@@ -32,38 +55,41 @@ export default function Home() {
                 <p className="text-muted-foreground">
                     Crie enquetes com até 8 opções, vote e acompanhe cada novo voto em tempo real.
                 </p>
-                <div className="inline-block mt-2 rounded-lg bg-muted px-3 py-1 text-sm font-medium">
-                    Em destaque agora: <span className="text-primary font-semibold">ola</span> com <span className="text-primary font-semibold">1213</span> votos.
-                </div>
+                {topPoll.totalVotes > 0 && (
+                    <div className="inline-block mt-2 rounded-lg bg-muted px-3 py-1 text-sm font-medium">
+                        Em destaque agora: <span className="text-primary font-semibold">{topPoll.title}</span> com <span className="text-primary font-semibold">{topPoll.totalVotes}</span> votos.
+                    </div>
+                )}
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 text-sm">
+                <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 text-sm w-full sm:w-auto">
                     <Search className="size-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Procurar enquete</span>
+                    <input
+                        type="text"
+                        placeholder="Procurar enquete..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="bg-transparent outline-none placeholder:text-muted-foreground text-sm w-full"
+                    />
                 </div>
-                <button className="text-sm text-muted-foreground rounded-lg px-3 py-1.5 border border-slate-800 hover:bg-slate-800/10 transition-colors">
-                    todas as categorias
-                </button>
-                <div className="flex gap-2 text-sm">
-                    <button className="px-3 py-1.5 rounded-lg bg-muted font-medium">
-                        recentes
-                    </button>
-                    <button className="px-3 py-1.5 rounded-lg text-muted-foreground hover:bg-muted/50">
-                        populares
-                    </button>
-                </div>
+                <Filters onCategoryChange={setCategory} onSortChange={setSort} />
             </div>
+
             {loading ? (
-                <p className="text-muted-foreground">Carregando enquetes...</p>
-            ) : enquetes && enquetes.length > 0 ? (
+                <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+                    Carregando enquetes...
+                </div>
+            ) : processedPolls.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {enquetes.map((i) => (
-                        <Card key={i.id} enquete={i} />
+                    {processedPolls.map((enquete) => (
+                        <Card key={enquete.id} enquete={enquete} />
                     ))}
                 </div>
             ) : (
-                <p>Nenhum enquete encontrado</p>
+                <div className="p-8 text-center border rounded-lg text-muted-foreground text-sm">
+                    Nenhuma enquete encontrada.
+                </div>
             )}
         </section>
     );

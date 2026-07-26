@@ -1,31 +1,54 @@
-import { useEffect, useState } from "react";
-import { PollOptionResult } from "../types/types";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import api from '../services/api';
 
-export function useRealTime(pollId: number | string) {
-    const [option, setOptions] = useState<PollOptionResult[]>([]);
-    const [isConnect, setIsConnnect] = useState(false);
+/**
+ * Busca a LISTA de todas as enquetes, atualizando em intervalo fixo.
+ * Use na Home (grid de cards). Para uma enquete específica, use usePollRealtime.
+ */
+export function usePollsRealtime(intervalo = 5000) {
+    const [polls, setPolls] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const isFetchingRef = useRef(false);
+
+    const fetchPolls = useCallback(async (isInitial = false) => {
+        if (isFetchingRef.current) return;
+        isFetchingRef.current = true;
+        if (isInitial) setLoading(true);
+
+        try {
+            // Ajuste a rota abaixo para bater com o endpoint de listagem do seu backend
+            // (ex: '/enquetes', '/enquetes/index', '/polls')
+            const response = await api.get('/enquetes');
+            setPolls(response.data || []);
+        } catch (error) {
+            console.error('Erro ao atualizar lista de enquetes:', error);
+        } finally {
+            isFetchingRef.current = false;
+            if (isInitial) setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        if (!pollId) return;
-        const eventSource = new EventSource(`http://localhost:8000/api/polls/${pollId}/stream`);
-        eventSource.onmessage = (event) => {
-            try {
-                const update: PollOptionResult[] = JSON.parse(event.data);
-                setOptions(update);
-            } catch (error) {
-                console.error('Erro ao processar atualização em tempo real: ', error);
-                setIsConnnect(false);
-                eventSource.close();
+        fetchPolls(true);
+
+        const timer = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                fetchPolls(false);
             }
-        }
-        eventSource.onerror = (err) => {
-            console.error('Erro na conexao SSE: ', err);
-            setIsConnnect(false);
-            eventSource.close();
-        }
-        return () => {
-            eventSource.close();
+        }, intervalo);
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchPolls(false);
+            }
         };
-    }, [pollId]);
-    return { option, isConnect };
+
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => {
+            clearInterval(timer);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, [intervalo, fetchPolls]);
+
+    return { polls, loading, refetch: () => fetchPolls(false) };
 }

@@ -1,22 +1,32 @@
 import { useState, useContext } from 'react';
 import {Link, useNavigate} from 'react-router-dom';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ChevronDown } from 'lucide-react';
 import api from '@/services/api';
 import { AuthContext } from '@/context/AuthContext';
 
 const inputsSettings = [
     { title: "Título", type: "text", name: "title", placeholder: "Ex: Qual a melhor linguagem?" },
-    { title: "Categoria", type: "text", name: "category", placeholder: "Ex: Tecnologia" },
     { title: "Data de expiração", type: "date", name: "expiresAt", placeholder: "Data de expiração" }
+];
+const categories = [
+    { value: "geral", label: "Geral" },
+    { value: "tecnologia", label: "Tecnologia" },
+    { value: "entretenimento", label: "Entretenimento" },
+    { value: "esportes", label: "Esportes" },
+    { value: "filmes", label: "Filmes" },
+    { value: "musica", label: "Música" },
+    { value: "games", label: "Games" },
+    { value: "politica", label: "Política" },
 ];
 
 export default function Criar() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         title: '',
-        category: '',
+        category: 'geral',
         expiresAt: ''
     });
+
     const [options, setOptions] = useState(['', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -115,6 +125,24 @@ export default function Criar() {
                             />
                         </div>
                     ))}
+                </div>
+
+                <div className="relative">
+                    <select
+                        id="category"
+                        name="category"
+                        value={formData.category}
+                        onChange={handleInputChange}
+                        className="appearance-none w-full px-3 py-2 pr-10 border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                        {categories.map((category) => (
+                            <option key={category.value} value={category.value}>
+                                {category.label}
+                            </option>
+                        ))}
+                    </select>
+
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                 </div>
 
                 <div className="space-y-3 pt-2">
