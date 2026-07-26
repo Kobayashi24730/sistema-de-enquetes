@@ -110,7 +110,7 @@ export default function EnqueteDetalhe() {
     if (error || !poll) {
         return (
             <div className="max-w-3xl mx-auto p-12 text-center space-y-4">
-                <p className="text-sm font-medium text-red-600">{error || 'Enquete não encontrada.'}</p>
+                <p className="text-sm font-medium text-red-600">{error || 'Enquete não encontrada efetue o login ou se registre.'}</p>
                 <Link to="/" className="inline-flex items-center gap-2 text-xs font-semibold text-blue-600 hover:underline">
                     <ArrowLeft className="size-3.5" /> Voltar para a Home
                 </Link>

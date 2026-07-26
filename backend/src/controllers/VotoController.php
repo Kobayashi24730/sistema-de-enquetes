@@ -11,7 +11,7 @@ use PDO;
 class VotoController {
 
     public function vote() {
-        // Tenta obter o usuário se estiver autenticado, ou define um fallback
+        // 1. Tenta obter o usuário se estiver autenticado, ou define fallback
         $voterName = 'Um visitante';
         try {
             $user = AuthMiddleware::authenticate();
@@ -19,7 +19,7 @@ class VotoController {
                 $voterName = $user['name'];
             }
         } catch (\Exception $e) {
-            // Se o middleware lançar exceção por não estar logado, segue como anônimo
+            // Se não houver token/login válido, segue como visitante anônimo
         }
 
         $data = json_decode(file_get_contents('php://input'), true);
@@ -38,11 +38,11 @@ class VotoController {
         $db->beginTransaction();
 
         try {
-            // 1. Incrementa o voto na opção escolhida
+            // 2. Incrementa o voto na opção escolhida
             $stmtVote = $db->prepare("UPDATE enquetes_options SET votes = votes + 1 WHERE id = ? AND enquete_id = ?");
             $stmtVote->execute([$optionId, $enqueteId]);
 
-            // 2. Busca dados do criador + título da enquete
+            // 3. Busca dados do criador + título da enquete
             $stmtOwner = $db->prepare("
                 SELECT e.title, u.name AS criador_nome, u.email AS criador_email
                 FROM enquetes e
@@ -59,10 +59,10 @@ class VotoController {
                 return;
             }
 
-            // Confirma a gravação no banco
+            // Confirma a alteração no banco de dados
             $db->commit();
 
-            // 3. Dispara a notificação por e-mail se o criador possuir um e-mail válido
+            // 4. Dispara a notificação por e-mail se o criador tiver e-mail válido
             if (!empty($enqueteInfo['criador_email'])) {
                 $this->sendVoteNotificationEmail(
                     $enqueteInfo['criador_email'],
@@ -86,42 +86,43 @@ class VotoController {
         $mail = new PHPMailer(true);
 
         try {
-            // Lê das variáveis de ambiente ou utiliza os fallbacks
+            // Leitura de variáveis de ambiente usando getenv() com suporte a $_ENV
+            $host     = getenv('SMTP_HOST')     ?: ($_ENV['SMTP_HOST']     ?? 'smtp.gmail.com');
+            $username = getenv('SMTP_USER')     ?: ($_ENV['SMTP_USER']     ?? 'seu_email@gmail.com');
+            $password = getenv('SMTP_PASS')     ?: ($_ENV['SMTP_PASS']     ?? 'sua_senha_de_app');
+            $port     = getenv('SMTP_PORT')     ?: ($_ENV['SMTP_PORT']     ?? 587);
+            $fromName = getenv('SMTP_FROM_NAME')?: ($_ENV['SMTP_FROM_NAME']?? 'Sistema de Enquetes');
+
+            // Configuração do PHPMailer
             $mail->isSMTP();
-            $mail->Host       = $_ENV['SMTP_HOST']     ?? 'sandbox.smtp.mailtrap.io';
+            $mail->Host       = $host;
             $mail->SMTPAuth   = true;
-            $mail->Username   = $_ENV['SMTP_USER']     ?? 'SEU_USERNAME_MAILTRAP';
-            $mail->Password   = $_ENV['SMTP_PASS']     ?? 'SUA_SENHA_MAILTRAP';
-            $mail->SMTPSecure = $_ENV['SMTP_SECURE']   ?? PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port       = $_ENV['SMTP_PORT']     ?? 2525;
+            $mail->Username   = $username;
+            $mail->Password   = $password;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = (int) $port;
             $mail->CharSet    = 'UTF-8';
 
-            // Remetente e Destinatário
-            $fromEmail = $_ENV['SMTP_FROM_EMAIL'] ?? 'nao-responda@sistemaenquetes.com';
-            $fromName  = $_ENV['SMTP_FROM_NAME']  ?? 'Sistema de Enquetes';
-
-            $mail->setFrom($fromEmail, $fromName);
+            // Remetente (Obrigatoriamente o mesmo e-mail do Username no caso do Gmail)
+            $mail->setFrom($username, $fromName);
             $mail->addAddress($toEmail, $toName);
 
-            // Conteúdo do E-mail
+            // Conteúdo
             $mail->isHTML(true);
             $mail->Subject = "Novo voto na sua enquete: {$pollTitle}";
             $mail->Body    = "
-                <div style='font-family: sans-serif; padding: 20px; color: #333;'>
-                    <h2>Olá, {$toName}!</h2>
+                <div style='font-family: Arial, sans-serif; padding: 20px; color: #333;'>
+                    <h2 style='color: #2563eb;'>Olá, {$toName}!</h2>
                     <p>O usuário <strong>{$voterName}</strong> acabou de votar na sua enquete: <em>\"{$pollTitle}\"</em>.</p>
-                    <hr style='border: 0; border-top: 1px solid #eee;'>
-                    <p style='font-size: 12px; color: #777;'>Notificação automática do Sistema de Enquetes.</p>
+                    <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;'>
+                    <p style='font-size: 12px; color: #777;'>Esta é uma notificação automática do Sistema de Enquetes.</p>
                 </div>
             ";
 
             $mail->send();
         } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'error' => 'Falha no envio do e-mail: ' . $mail->ErrorInfo
-            ]);
-            exit; // Interrompe a execução para exibir o erro na resposta
+            // Log do erro no servidor sem parar a resposta para o React
+            error_log("Erro no envio do e-mail de notificação: " . $mail->ErrorInfo);
         }
     }
 }
