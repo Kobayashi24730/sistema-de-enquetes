@@ -117,7 +117,11 @@ class VotoController {
 
             $mail->send();
         } catch (Exception $e) {
-            error_log("Erro ao enviar e-mail via PHPMailer: " . $mail->ErrorInfo);
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'Falha no envio do e-mail: ' . $mail->ErrorInfo
+            ]);
+            exit; // Interrompe a execução para exibir o erro na resposta
         }
     }
 }
