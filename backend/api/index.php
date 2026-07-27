@@ -8,13 +8,12 @@ if (class_exists('Dotenv\Dotenv')) {
     $dotenv->safeLoad();
 }
 
-// 2. Lógica de CORS Dinâmico
+// 2. Lógica de CORS Dinâmico para Vercel e Dev
 $http_origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $client_url  = $_ENV['CLIENT_URL'] ?? $_SERVER['CLIENT_URL'] ?? getenv('CLIENT_URL') ?: 'http://localhost:3000';
 
 if (
-    $http_origin === $client_url ||
-    str_ends_with($http_origin, '.vercel.app') ||
+    preg_match('/^https:\/\/.*\.vercel\.app$/', $http_origin) ||
     $http_origin === 'http://localhost:3000' ||
     $http_origin === 'http://localhost:5173'
 ) {
@@ -24,9 +23,9 @@ if (
 }
 
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Cache-Control, Accept");
+header("Access-Control-Allow-Credentials: true");
 
-// Intercepta requisição OPTIONS (Preflight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();

@@ -23,10 +23,8 @@ class VotoController {
         }
 
         $data = json_decode(file_get_contents('php://input'), true);
-
-        // Suporta tanto poll_id quanto enquete_id
         $optionId  = $data['option_id'] ?? null;
-        $enqueteId = $data['poll_id']   ?? $data['enquete_id'] ?? null;
+        $enqueteId = $data['enquete_id'] ?? null;
 
         if (!$optionId || !$enqueteId) {
             http_response_code(400);

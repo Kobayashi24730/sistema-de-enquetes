@@ -22,11 +22,8 @@ const categories = [
 export default function Criar() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        title: '',
-        category: 'geral',
-        expiresAt: ''
+        title: '', category: 'geral', expiresAt: ''
     });
-
     const [options, setOptions] = useState(['', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -47,22 +44,27 @@ export default function Criar() {
         );
     }
 
+    // seta os dados do formulário
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    // adiciona uma nova opção
     const handleOptionChange = (index, value) => {
         const newOptions = [...options];
         newOptions[index] = value;
         setOptions(newOptions);
     };
 
+    // adiciona opção
     const addOption = () => {
         if (options.length < 8) {
             setOptions([...options, '']);
         }
     };
+
+    // remove opção
     const removeOption = (index) => {
         if (options.length > 2) {
             setOptions(options.filter((_, i) => i !== index));
@@ -74,13 +76,11 @@ export default function Criar() {
         e.preventDefault();
         setError('');
 
-        // Validação local de opções vazias
-        const filteredOptions = options.map((opt) => opt.trim()).filter((opt) => opt !== '');
+        const filteredOptions = options.map((opt) => opt.trim()).filter((opt) => opt !== ''); // valida se as opções estao vazias.
         if (filteredOptions.length < 2) {
             setError('Preencha pelo menos 2 opções válidas.');
             return;
         }
-
         setLoading(true);
 
         try {
@@ -90,7 +90,6 @@ export default function Criar() {
                 expires_at: formData.expiresAt || null,
                 options: filteredOptions
             });
-
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.error || 'Erro ao criar enquete.');

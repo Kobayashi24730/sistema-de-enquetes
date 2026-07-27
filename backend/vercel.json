@@ -6,9 +6,16 @@
   },
   "routes": [
     {
+      "src": "/api/stream",
+      "dest": "/api/index.php",
+      "headers": {
+        "Cache-Control": "no-cache, no-transform",
+        "X-Accel-Buffering": "no"
+      }
+    },
+    {
       "src": "/(.*)",
       "dest": "/api/index.php"
     }
   ]
 }
-
