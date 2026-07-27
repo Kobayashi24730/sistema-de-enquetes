@@ -71,7 +71,7 @@ export default function Perfil() {
     const handleDeleteAccount = async () => {
         if (window.confirm('Tem certeza que deseja excluir sua conta? Esta ação não poderá ser desfeita.')) {
             try {
-                await api.delete(`/usuarios/${user.id}`);
+                await api.delete(`/perfil/${user.id}`);
                 toast.success('Conta excluída com sucesso.');
                 logout(); // Desloga o usuário após deletar
             } catch (err) {
