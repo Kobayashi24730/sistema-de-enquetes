@@ -56,7 +56,7 @@ export default function Perfil() {
 
         setSubmitting(true);
         try {
-            await api.put(`/usuarios/${user.id}`, { nome, email });
+            await api.put(`/perfil/${user.id}`, { nome, email });
             setUser({ ...user, nome, email }); // Atualiza o estado global
             toast.success('Perfil atualizado com sucesso!');
         } catch (err) {
@@ -71,7 +71,7 @@ export default function Perfil() {
     const handleDeleteAccount = async () => {
         if (window.confirm('Tem certeza que deseja excluir sua conta? Esta ação não poderá ser desfeita.')) {
             try {
-                await api.delete(`/perfil/${user.id}`);
+                await api.delete(`/usuarios/${user.id}`);
                 toast.success('Conta excluída com sucesso.');
                 logout(); // Desloga o usuário após deletar
             } catch (err) {
