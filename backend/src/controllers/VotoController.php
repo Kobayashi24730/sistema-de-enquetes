@@ -12,15 +12,10 @@ class VotoController {
 
     public function vote() {
         $voterName = 'Um visitante';
-        $userId = null;
-
-        // Tenta autenticar o usuário via JWT
         try {
             $user = AuthMiddleware::authenticate();
-            if (!empty($user)) {
-                // Captura o ID do usuário (suporta $user['id'] ou $user['data']['id'])
-                $userId = $user['id'] ?? $user['data']['id'] ?? null;
-                $voterName = $user['name'] ?? $user['data']['name'] ?? 'Um usuário registrado';
+            if (!empty($user['name'])) {
+                $voterName = $user['name'];
             }
         } catch (\Exception $e) {
             // Se não houver token/login válido, segue como visitante anônimo
@@ -37,29 +32,10 @@ class VotoController {
         }
 
         $db = Database::getConnection();
-
-        // Se o usuário estiver logado, verifica se ele já votou nesta enquete
-        if ($userId) {
-            $stmtCheck = $db->prepare("SELECT id FROM enquete_votos WHERE enquete_id = ? AND user_id = ? LIMIT 1");
-            $stmtCheck->execute([$enqueteId, $userId]);
-            if ($stmtCheck->fetch()) {
-                http_response_code(400);
-                echo json_encode(['error' => 'Você já votou nesta enquete.']);
-                return;
-            }
-        }
-
         $db->beginTransaction();
 
         try {
-            // 1. Registra o voto individual na tabela enquete_votos
-            $stmtInsertVote = $db->prepare("
-                INSERT INTO enquete_votos (enquete_id, option_id, user_id)
-                VALUES (?, ?, ?)
-            ");
-            $stmtInsertVote->execute([$enqueteId, $optionId, $userId]);
-
-            // 2. Incrementa o voto na opção escolhida
+            // Incrementa o voto na opção escolhida
             $stmtVote = $db->prepare("UPDATE enquetes_options SET votes = votes + 1 WHERE id = ? AND enquete_id = ?");
             $stmtVote->execute([$optionId, $enqueteId]);
 
@@ -80,7 +56,7 @@ class VotoController {
                 return;
             }
 
-            // Confirma as alterações no banco de dados
+            // Confirma a alteração no banco de dados
             $db->commit();
 
             // Dispara a notificação por e-mail se o criador tiver e-mail válido
@@ -146,3 +122,4 @@ class VotoController {
         }
     }
 }
+
