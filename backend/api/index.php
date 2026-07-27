@@ -88,6 +88,18 @@ switch ($route) {
             echo json_encode(['error' => 'Método não permitido para /register. Use POST.']);
         }
         break;
+    case '/usuarios/item':
+        $userData = Middlewares\AuthMiddleware::authenticate();
+
+        if ($method === 'PUT') {
+            $userController->update($userIdFromRoute);
+        } elseif ($method === 'DELETE') {
+            $userController->delete($userIdFromRoute);
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Método não permitido para /usuarios/{id}. Use PUT ou DELETE.']);
+        }
+        break;
 
     case '/forgot-password':
         if ($method === 'POST') {

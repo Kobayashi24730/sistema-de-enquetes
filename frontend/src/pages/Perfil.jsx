@@ -56,8 +56,9 @@ export default function Perfil() {
 
         setSubmitting(true);
         try {
-            await api.put(`/perfil/${user.id}`, { nome, email });
-            setUser({ ...user, nome, email }); // Atualiza o estado global
+            // Altere de /perfil/${user.id} para /usuarios/${user.id}
+            await api.put(`/usuarios/${user.id}`, { nome, email });
+            setUser({ ...user, nome, email });
             toast.success('Perfil atualizado com sucesso!');
         } catch (err) {
             const msg = err.response?.data?.error || 'Erro ao atualizar perfil.';
