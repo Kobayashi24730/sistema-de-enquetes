@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '@/services/api.js';
@@ -6,8 +6,17 @@ import toast from 'react-hot-toast';
 
 export default function Perfil() {
     const { user, setUser, logout, loading } = useContext(AuthContext);
-    const [nome, setNome] = useState(user?.nome || '');
-    const [email, setEmail] = useState(user?.email || '');
+    const [nome, setNome] = useState('');
+    const [email, setEmail] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    // Sincroniza o formulário sempre que o usuário for carregado/atualizado
+    useEffect(() => {
+        if (user) {
+            setNome(user.nome || user.name || '');
+            setEmail(user.email || '');
+        }
+    }, [user]);
 
     if (loading) {
         return (
@@ -21,6 +30,7 @@ export default function Perfil() {
             </div>
         );
     }
+
     if (!user) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center p-4">
@@ -35,50 +45,74 @@ export default function Perfil() {
             </div>
         );
     }
+
     // UPDATE (Editar dados do Usuário)
     const handleUpdate = async (e) => {
         e.preventDefault();
+        if (!nome.trim() || !email.trim()) {
+            toast.error('Preencha todos os campos!');
+            return;
+        }
+
+        setSubmitting(true);
         try {
             await api.put(`/usuarios/${user.id}`, { nome, email });
             setUser({ ...user, nome, email }); // Atualiza o estado global
             toast.success('Perfil atualizado com sucesso!');
         } catch (err) {
-            toast.error('Erro ao atualizar perfil.');
+            const msg = err.response?.data?.error || 'Erro ao atualizar perfil.';
+            toast.error(msg);
+        } finally {
+            setSubmitting(false);
         }
     };
 
     // DELETE (Excluir Conta)
     const handleDeleteAccount = async () => {
-        if (confirm('Tem certeza que deseja excluir sua conta?')) {
+        if (window.confirm('Tem certeza que deseja excluir sua conta? Esta ação não poderá ser desfeita.')) {
             try {
                 await api.delete(`/usuarios/${user.id}`);
+                toast.success('Conta excluída com sucesso.');
                 logout(); // Desloga o usuário após deletar
             } catch (err) {
-                toast.error('Erro ao deletar conta.');
+                const msg = err.response?.data?.error || 'Erro ao deletar conta.';
+                toast.error(msg);
             }
         }
     };
+
+    // Pega a inicial com fallback seguro
+    const initialLetter = (user?.nome || user?.name || 'U').charAt(0).toUpperCase();
+
     return (
         <div className="max-w-xl mx-auto my-8 p-6 bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col gap-6">
             {/* Cabeçalho */}
             <div className="border-b pb-4">
                 <h2 className="text-2xl font-bold text-gray-800">
-                    Olá, <span className="text-indigo-600">{user?.nome}</span>!
+                    Olá, <span className="text-indigo-600">{user?.nome || user?.name}</span>!
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">Seja bem-vindo(a) ao seu perfil</p>
             </div>
 
             {/* Card de Avatar / Usuário */}
             <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div className="relative">
-                    <img
-                        src={user?.foto ? user.foto : 'https://via.placeholder.com/150'}
-                        alt="Foto do usuário"
-                        className="w-16 h-16 rounded-full object-cover border-2 border-indigo-500 shadow-sm"
-                    />
+                <div className="relative shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 border border-indigo-200 flex items-center justify-center overflow-hidden">
+                        {user?.image ? (
+                            <img
+                                src={user.image}
+                                alt={user?.nome || 'Avatar'}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <span className="text-sm font-bold text-indigo-600">{initialLetter}</span>
+                        )}
+                    </div>
+                    {/* Indicador Ativo (Tailwind puro) */}
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white bg-emerald-500" />
                 </div>
                 <div>
-                    <h3 className="font-semibold text-gray-800 text-lg">{user?.nome}</h3>
+                    <h3 className="font-semibold text-gray-800 text-lg">{user?.nome || user?.name}</h3>
                     <p className="text-sm text-gray-500">{user?.email}</p>
                 </div>
             </div>
@@ -110,8 +144,11 @@ export default function Perfil() {
                 </div>
 
                 <button
-                    type="submit" className="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg shadow-sm transition-colors text-sm">
-                    Salvar Alterações
+                    type="submit"
+                    disabled={submitting}
+                    className="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg shadow-sm transition-colors text-sm flex items-center justify-center gap-2"
+                >
+                    {submitting ? 'Salvando...' : 'Salvar Alterações'}
                 </button>
             </form>
 
@@ -120,9 +157,8 @@ export default function Perfil() {
             {/* Ações de Segurança / Conta */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <Link
-                    type="button"
                     to="/forgot-password"
-                    className="w-full sm:w-auto text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline py-2 transition-colors"
+                    className="w-full sm:w-auto text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline py-2 transition-colors text-center"
                 >
                     Recuperar senha
                 </Link>
