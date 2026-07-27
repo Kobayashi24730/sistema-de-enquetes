@@ -6,8 +6,9 @@ import { AuthContext } from '../context/AuthContext.jsx';
 import Resultados from '@/components/Resultados.jsx';
 import { Chart } from '@/components/Charts.jsx';
 import { getVotedEnquete, saveVotedEnquete } from '@/hooks/useRealTime.ts';
+import toast from "react-hot-toast";
 
-// Estilos Fluent estritamente claros
+// Estilos Fluent
 const fluentCard =
     'rounded-lg border border-neutral-200/80 bg-white p-6 space-y-4 shadow-[0_2px_4px_rgba(0,0,0,0.04)]';
 
@@ -19,8 +20,8 @@ export default function EnqueteDetalhe() {
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
 
-    const [poll, setPoll] = useState(null);
-    const [loadingPoll, setLoadingPoll] = useState(true);
+    const [enquete, setEnquete] = useState(null);
+    const [loadingEnquete, setLoadingEnquete] = useState(true);
     const [error, setError] = useState('');
     const [selectedOption, setSelectedOption] = useState(null);
     const [votedOptionId, setVotedOptionId] = useState(null);
@@ -28,20 +29,21 @@ export default function EnqueteDetalhe() {
     const [voting, setVoting] = useState(false);
 
     useEffect(() => {
-        // Checa no localStorage assim que abre a página usando a função correta
+        // Checa no localStorage assim que abre a página usando a função correta.
         const localVotes = getVotedEnquete();
         if (localVotes.includes(id) || localVotes.includes(Number(id))) {
             setHasVotedLocal(true);
         }
 
-        fetchPoll();
+        fetchEnquete();
     }, [id]);
 
-    const fetchPoll = async () => {
+    const fetchEnquete = async () => {
         try {
             const response = await api.get(`/enquetes/show?id=${id}`);
-            setPoll(response.data);
+            setEnquete(response.data);
 
+            // Verifica se o usuário já votou na enquete
             if (response.data.voted_option_id) {
                 setVotedOptionId(response.data.voted_option_id);
                 setHasVotedLocal(true);
@@ -50,53 +52,56 @@ export default function EnqueteDetalhe() {
             console.error('Erro ao buscar enquete:', err);
             setError('Enquete não encontrada ou falha no servidor.');
         } finally {
-            setLoadingPoll(false);
+            setLoadingEnquete(false);
         }
     };
 
+    // funcao para votar
     const handleVote = async (e) => {
         e.preventDefault();
         if (!selectedOption) return;
 
         setVoting(true);
         try {
-            // Envia para o backend (payload: poll_id / option_id)
+            // Envia para o backend (payload: enquete_id / option_id)
             await api.post('/enquetes/vote', {
-                poll_id: id,
+                enquete_id: id,
                 option_id: selectedOption
             });
 
-            // 1. Grava no localStorage do navegador para bloquear votos futuros
+            // Grava no localStorage do navegador para bloquear votos futuros
             saveVotedEnquete(id);
             setHasVotedLocal(true);
             setVotedOptionId(selectedOption);
 
-            // 2. Recarrega os dados da enquete para atualizar contagens
-            await fetchPoll();
+            // Recarrega os dados da enquete para atualizar contagens
+            await fetchEnquete();
         } catch (err) {
-            alert(err.response?.data?.error || 'Erro ao registrar seu voto.');
+            toast(err.response?.data?.error || 'Erro ao registrar seu voto.');
         } finally {
             setVoting(false);
         }
     };
 
+    // funcao para excluir enquete
     const handleDelete = async () => {
         if (window.confirm('Tem certeza de que deseja excluir esta enquete?')) {
             try {
                 await api.delete(`/enquetes/delete?id=${id}`);
                 navigate('/');
             } catch (err) {
-                alert(err.response?.data?.error || 'Erro ao excluir a enquete.');
+                toast(err.response?.data?.error || 'Erro ao excluir a enquete.');
             }
         }
     };
 
+    // funcao para compartirlhar enquete
     const handleShare = () => {
-        navigator.clipboard.writeText(window.location.href);
-        alert('Link copiado para a área de transferência!');
+        navigator.clipboard.writeText(window.location.href); // copia o link para a area de trasferencia
+        toast('Link copiado para a área de transferência!');
     };
 
-    if (loadingPoll) {
+    if (loadingEnquete) {
         return (
             <div className="flex h-64 items-center justify-center">
                 <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500">
@@ -107,33 +112,29 @@ export default function EnqueteDetalhe() {
         );
     }
 
-    if (error || !poll) {
+    if (error || !enquete || !user) {
         return (
             <div className="max-w-3xl mx-auto p-12 text-center space-y-4">
-                <p className="text-sm font-medium text-red-600">{error || 'Enquete não encontrada.'}</p>
+                <p className="text-sm font-medium text-red-600">{error || 'Não foi possivel acessar essa pagina.'}</p>
                 <Link to="/" className="inline-flex items-center gap-2 text-xs font-semibold text-blue-600 hover:underline">
-                    <ArrowLeft className="size-3.5" /> Voltar para a Home
+                    <ArrowLeft className="size-3.5" /> Voltar para a Home e tente logar/registrar-se
                 </Link>
             </div>
         );
     }
 
-    const options = poll.options || poll.opcoes || [];
-    const totalVotes = options.reduce((acc, opt) => acc + Number(opt.votes ?? opt.votos ?? 0), 0);
+    const options = enquete.options;
+    const totalVotes = options.reduce((acc, opt) => acc + Number(opt.votes ?? 0), 0); // calcula o total de votos
+    const isExpired = enquete.expires_at ? new Date(enquete.expires_at) < new Date() : false; // verifica se a enquete expirou
+    const isOwner = Boolean(user && enquete && (Number(user.id) === Number(enquete.user_id) || user.nome === enquete.criador)); // verifica se o usuario e o dono da enquete
 
-    const isExpired = poll.expires_at ? new Date(poll.expires_at) < new Date() : false;
-    const isOwner = Boolean(user && poll && (Number(user.id) === Number(poll.user_id) || user.nome === poll.criador));
-
-    // Pode votar se: NÃO tiver expirado E NÃO tiver votado antes (nem localmente nem na API)
+    // verifica se o usuario pode votar e se a enquete não expirou
     const canVote = !hasVotedLocal && !votedOptionId && !isExpired;
 
     return (
         <div className="max-w-3xl mx-auto space-y-5 p-4 text-neutral-900 md:p-6 font-sans">
             {/* Navegação Voltar */}
-            <Link
-                to="/"
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-900 transition-colors"
-            >
+            <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-900 transition-colors">
                 <ArrowLeft className="size-3.5" />
                 Todas as enquetes
             </Link>
@@ -142,16 +143,14 @@ export default function EnqueteDetalhe() {
             <div className={fluentCard}>
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 pb-3">
                     <div className="flex items-center gap-2">
-                        {poll.category && (
+                        {enquete.category && (
                             <span className="rounded bg-neutral-100 px-2 py-0.5 text-[11px] font-semibold text-neutral-600 border border-neutral-200/60">
-                                {poll.category}
+                                {enquete.category}
                             </span>
                         )}
 
                         {isExpired && (
-                            <span className="rounded bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500">
-                                Encerrada
-                            </span>
+                            <span className="rounded bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500">Encerrada</span>
                         )}
 
                         {hasVotedLocal && (
@@ -165,13 +164,13 @@ export default function EnqueteDetalhe() {
                     <div className="flex items-center gap-3 text-xs text-neutral-500">
                         <span className="inline-flex items-center gap-1 font-medium">
                             <User2 className="size-3.5 text-neutral-400" />
-                            {poll.criador || poll.author || 'Anônimo'}
+                            {enquete.criador || enquete.author || 'Anônimo'}
                         </span>
 
-                        {poll.created_at && (
+                        {enquete.created_at && (
                             <span className="inline-flex items-center gap-1 text-neutral-400">
                                 <Clock className="size-3.5 text-neutral-400" />
-                                {new Date(poll.created_at).toLocaleDateString('pt-BR')}
+                                {new Date(enquete.created_at).toLocaleDateString('pt-BR')}
                             </span>
                         )}
                     </div>
@@ -179,17 +178,17 @@ export default function EnqueteDetalhe() {
 
                 <div className="space-y-1.5 pt-1">
                     <h1 className="text-xl font-bold tracking-tight text-neutral-900 md:text-2xl">
-                        {poll.title}
+                        {enquete.title}
                     </h1>
-                    {poll.description && (
+                    {enquete.description && (
                         <p className="text-xs leading-relaxed text-neutral-600">
-                            {poll.description}
+                            {enquete.description}
                         </p>
                     )}
                 </div>
             </div>
 
-            {/* Formulário de Votação (Apenas se canVote === true) */}
+            {/* Formulário de Votação */}
             {canVote ? (
                 <form onSubmit={handleVote} className={fluentCard}>
                     <h2 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
@@ -233,7 +232,6 @@ export default function EnqueteDetalhe() {
                     </button>
                 </form>
             ) : (
-                /* Alerta de Voto Confirmado / Já Votou */
                 hasVotedLocal && (
                     <div className="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50/70 p-3 text-xs font-medium text-emerald-800">
                         <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
@@ -245,16 +243,14 @@ export default function EnqueteDetalhe() {
             {/* Painel de Resultados em Barras */}
             <div className={fluentCard}>
                 <div className="flex items-center justify-between border-b border-neutral-100 pb-2.5">
-                    <h2 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
-                        Resultados
-                    </h2>
+                    <h2 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Resultados</h2>
                     <span className="inline-flex items-center gap-1 text-xs text-neutral-500 font-medium">
                         <BarChart2 className="size-3.5 text-blue-600" />
                         {totalVotes} {totalVotes === 1 ? 'voto' : 'votos'}
                     </span>
                 </div>
 
-                <Resultados enquete={poll} votedOptionId={votedOptionId} />
+                <Resultados enquete={enquete} votedOptionId={votedOptionId} />
 
                 {isOwner && (
                     <p className="border-t border-neutral-100 pt-2 text-[11px] text-neutral-400">
@@ -263,7 +259,7 @@ export default function EnqueteDetalhe() {
                 )}
             </div>
 
-            {/* Componente de Gráfico Donut/Pie */}
+            {/* Componente do Gráfico */}
             <Chart options={options} />
 
             {/* Barra de Ações do Rodapé */}
@@ -275,18 +271,12 @@ export default function EnqueteDetalhe() {
 
                 {isOwner && (
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => navigate(`/editar/${id}`)}
-                            className={fluentButtonSecondary}
-                        >
+                        <button onClick={() => navigate(`/editar/${id}`)} className={fluentButtonSecondary} >
                             <Edit3 className="size-3.5" />
                             Editar
                         </button>
 
-                        <button
-                            onClick={handleDelete}
-                            className={`${fluentButtonSecondary} text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300`}
-                        >
+                        <button onClick={handleDelete}  className={`${fluentButtonSecondary} text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300`} >
                             <Trash2 className="size-3.5" />
                             Excluir
                         </button>

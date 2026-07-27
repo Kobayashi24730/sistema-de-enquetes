@@ -1,5 +1,7 @@
-const CHART_COLORS = [
-    "var(--color-chart-1, #2563eb)", // Fallback para azul se a var CSS não existir
+
+// Constante com as cores do gráfico
+const chart_color = [
+    "var(--color-chart-1, #2563eb)",
     "var(--color-chart-2, #3b82f6)",
     "var(--color-chart-3, #60a5fa)",
     "var(--color-chart-4, #93c5fd)",
@@ -11,12 +13,11 @@ const CHART_COLORS = [
 
 export default function Resultados({ enquete, votedOptionId }) {
     if (!enquete) return null;
-
-    const options = enquete.options || enquete.opcoes || [];
+    const options = enquete.options;
 
     // Soma total de votos
     const total = options.reduce((acc, opt) => {
-        const votes = Number(opt.votes ?? opt.votos ?? 0);
+        const votes = Number(opt.votes ?? 0);
         return acc + votes;
     }, 0);
 
@@ -28,15 +29,15 @@ export default function Resultados({ enquete, votedOptionId }) {
         <ul className="space-y-3">
             {options.map((option, index) => {
                 const optionId = option.id;
-                const optionTexto = option.text || option.opcao_text || option.opcao_texto || option.titulo;
-                const optionVotos = Number(option.votes ?? option.votos ?? 0);
+                const optionTexto = option.option_text;
+                const optionVotos = Number(option.votes ?? 0);
                 const porcentagem = total > 0 ? (optionVotos / total) * 100 : 0;
 
                 // Checa se esta é a opção escolhida pelo usuário
                 const isVoted = Number(votedOptionId) === Number(optionId);
 
                 // Seleciona uma cor do array circularmente baseada no índice
-                const barColor = CHART_COLORS[index % CHART_COLORS.length];
+                const barColor = chart_color[index % chart_color.length];
 
                 return (
                     <li key={optionId} className="space-y-1.5">
@@ -55,10 +56,7 @@ export default function Resultados({ enquete, votedOptionId }) {
                         <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-100 border border-neutral-200/60">
                             <div
                                 className="h-full transition-all duration-500 ease-out rounded-full"
-                                style={{
-                                    width: `${porcentagem}%`,
-                                    backgroundColor: isVoted ? '#2563eb' : barColor
-                                }}
+                                style={{ width: `${porcentagem}%`, backgroundColor: isVoted ? '#2563eb' : barColor }}
                             />
                         </div>
                     </li>

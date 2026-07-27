@@ -17,6 +17,7 @@ import {AuthContext} from "@/context/AuthContext.jsx";
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
+// Schema de validação do formulário
 const formSchema = z.object({
     nome: z.string().optional(),
     email: z.string().email("Insira um e-mail válido"),
@@ -29,18 +30,13 @@ export default function Auth() {
     const [typeForm, setTypeForm] = useState("login");
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-
     const isLogin = typeForm === "login";
-
     const form = useForm({
         resolver: zodResolver(formSchema),
-        defaultValues: {
-            nome: '',
-            email: '',
-            senha: ''
-        }
+        defaultValues: { nome: '', email: '', senha: '' }
     });
 
+    // Função de envio do formulário /login && /register
     async function onSubmit(values) {
         setError('');
         setLoading(true);
@@ -53,11 +49,7 @@ export default function Auth() {
                 setLoading(true);
                 toast.success('Conta criada com sucesso.');
                 setTypeForm('login');
-                form.reset({
-                    nome: '',
-                    email: '',
-                    senha: ''
-                });
+                form.reset({ nome: '', email: '', senha: '' });
             }
         } catch (err) {
             setError(err.response?.data?.error ||'Ocorreu um erro ao processar sua solicitação.');
@@ -175,10 +167,7 @@ export default function Auth() {
                             className="mt-1 flex items-center justify-center gap-2 rounded-md bg-primary px-3.5 py-2.5 font-medium text-primary-foreground shadow-sm transition-all hover:opacity-90 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                            {loading
-                                ? "Carregando..."
-                                : isLogin ? "Entrar" : "Cadastrar"
-                            }
+                            {loading ? "Carregando..." : isLogin ? "Entrar" : "Cadastrar"}
                         </button>
                     </form>
                 </Form>
@@ -191,11 +180,7 @@ export default function Auth() {
                         onClick={() => {
                             setTypeForm(isLogin ? "register" : "login");
                             setError('');
-                            form.reset({
-                                nome: '',
-                                email: '',
-                                senha: ''
-                            });
+                            form.reset({ nome: '', email: '', senha: '' });
                         }}
                     >
                         {isLogin ? "Criar uma conta" : "Fazer login"}
