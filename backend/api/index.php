@@ -2,13 +2,13 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// 1. Carrega o .env se existir (safeLoad não lança exceção se não achar)
+// 1. Carrega o .env se existir
 if (class_exists('Dotenv\Dotenv')) {
     $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
     $dotenv->safeLoad();
 }
 
-// 2. Lógica de CORS Dinâmico (Aceita domínios .vercel.app, localhost e a CLIENT_URL)
+// 2. Lógica de CORS Dinâmico
 $http_origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $client_url  = $_ENV['CLIENT_URL'] ?? $_SERVER['CLIENT_URL'] ?? getenv('CLIENT_URL') ?: 'http://localhost:3000';
 
@@ -26,15 +26,20 @@ if (
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
-// Intercepta a requisição OPTIONS (Preflight de CORS) imediatamente
+// Intercepta requisição OPTIONS (Preflight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// 3. Captura Método HTTP e Rota
+// 3. Captura e Normalização da Rota
 $method = $_SERVER['REQUEST_METHOD'];
-$uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// REMOVE O PREFIXO /api SE EXISTIR NA URL
+if (str_starts_with($uri, '/api')) {
+    $uri = substr($uri, 4);
+}
 
 $route = rtrim($uri, '/');
 if (empty($route)) {
@@ -48,16 +53,14 @@ try {
 
     $userController = new Controllers\UserController($pdo);
     $pollController = new Controllers\PollController();
-    $votoController = new Controllers\VotoController(); // Descomente se usar esta classe
+    $votoController = new Controllers\VotoController();
     $forgotPasswordController = new Controllers\ForgotPasswordController();
     $streamController = new Controllers\StreamController();
 } catch (\Throwable $e) {
     http_response_code(500);
     echo json_encode([
         'error'   => 'Erro de inicialização no servidor',
-        'details' => $e->getMessage(),
-        'file'    => $e->getFile(),
-        'line'    => $e->getLine()
+        'details' => $e->getMessage()
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     exit();
 }
@@ -67,7 +70,6 @@ switch ($route) {
     case '/stream':
         if ($method === 'GET') {
             $pollId = $_GET['poll_id'] ?? $_GET['id'] ?? null;
-
             $streamController->streamPollResults($pollId);
         } else {
             http_response_code(405);
@@ -95,22 +97,22 @@ switch ($route) {
         break;
 
     case '/forgot-password':
-            if ($method === 'POST') {
-                $forgotPasswordController->sendResetLink();
-            } else {
-                http_response_code(405);
-                echo json_encode(['error' => 'Método não permitido. Use POST.']);
-            }
-            break;
+        if ($method === 'POST') {
+            $forgotPasswordController->sendResetLink();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Método não permitido. Use POST.']);
+        }
+        break;
 
-        case '/reset-password':
-            if ($method === 'POST') {
-                $forgotPasswordController->resetPassword();
-            } else {
-                http_response_code(405);
-                echo json_encode(['error' => 'Método não permitido. Use POST.']);
-            }
-            break;
+    case '/reset-password':
+        if ($method === 'POST') {
+            $forgotPasswordController->resetPassword();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Método não permitido. Use POST.']);
+        }
+        break;
 
     case '/profile':
     case '/perfil':
@@ -127,6 +129,8 @@ switch ($route) {
         if ($method === 'GET') {
             $pollController->index();
         } elseif ($method === 'POST') {
+            // Exige autenticação para criar enquetes
+            $userData = Middlewares\AuthMiddleware::authenticate();
             $pollController->create();
         } else {
             http_response_code(405);
@@ -142,6 +146,7 @@ switch ($route) {
 
     case '/enquetes/update':
         if ($method === 'PUT') {
+            $userData = Middlewares\AuthMiddleware::authenticate();
             $pollController->update();
         }
         break;
@@ -149,7 +154,8 @@ switch ($route) {
     case '/enquetes/vote':
         if ($method === 'POST') {
             if (isset($votoController)) {
-                RateLimitMiddleware::check(5,60);
+                // Adicionado o namespace Middlewares\
+                Middlewares\RateLimitMiddleware::check(5, 60);
                 $votoController->vote();
             } else {
                 http_response_code(500);
@@ -160,6 +166,7 @@ switch ($route) {
 
     case '/enquetes/delete':
         if ($method === 'DELETE') {
+            $userData = Middlewares\AuthMiddleware::authenticate();
             $pollController->delete();
         }
         break;
