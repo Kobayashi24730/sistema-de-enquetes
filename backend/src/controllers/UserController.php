@@ -29,7 +29,7 @@ class UserController {
             return;
         }
 
-        if (strlen($password) < 6) {
+        if (strlen($senha) < 6) {
             http_response_code(400);
             echo json_encode(['error' => 'Senha deve ter no mínimo 6 caracteres']);
             return;
@@ -193,7 +193,7 @@ class UserController {
                 echo json_encode(['error' => 'E-mail ou senha inválidos.']);
                 return;
             }
-            $secretKey = $_ENV['JWT_SECRET'] ?? $_SERVER['JWT_SECRET'] ?? 'a8Q3HtDTYlnyLXMtWgolaAi3TDPWwnd0km2h4nj80y5';
+            $secretKey = $_ENV['JWT_SECRET'] ?? $_SERVER['JWT_SECRET'] ?? throw new Exception('JWT_SECRET não configurado');
 
             $payload = [
                 'iss'  => 'localhost',

@@ -17,7 +17,7 @@ class AuthMiddleware {
         $token = $matches[1];
 
         try {
-            $secretKey = $_ENV['JWT_SECRET'] ?? $_SERVER['JWT_SECRET'] ?? 'a8Q3HtDTYlnyLXMtWgolaAi3TDPWwnd0km2h4nj80y5';
+            $secretKey = $_ENV['JWT_SECRET'] ?? $_SERVER['JWT_SECRET'] ?? throw new Exception('JWT_SECRET não configurado');
             $decoded = JWT::decode($token, new Key($secretKey, 'HS256'));
             return (array) $decoded->data;
         } catch (Exception $e) {

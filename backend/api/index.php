@@ -64,12 +64,16 @@ try {
 
 // 5. Roteamento da Aplicação
 switch ($route) {
-    case 'stream':
-        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $stream = new StreamController();
-            $stream->stream();
+    case '/stream':
+        if ($method === 'GET') {
+            $pollId = $_GET['poll_id'] ?? $_GET['id'] ?? null;
+
+            $streamController->streamPollResults($pollId);
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Método não permitido para /stream. Use GET.']);
         }
-    break;
+        break;
 
     case '/login':
         if ($method === 'POST') {

@@ -9,7 +9,7 @@ import Editar from '@/pages/Editar.jsx';
 import {AuthProvider} from "@/context/AuthContext.jsx";
 import EnqueteDetalhe from "@/pages/EnqueteDetalhe.jsx";
 import ForgotPassword from "@/pages/ForgotPassword.jsx";
-import ResetPassword from "@/pages/ResetPassoword.jsx";
+import ResetPassword from "@/pages/ResetPassword.jsx";
 import { Toaster} from "react-hot-toast";
 
 export default function App() {
