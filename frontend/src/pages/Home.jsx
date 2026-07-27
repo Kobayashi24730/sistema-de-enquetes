@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import Card from '@/components/Cards.jsx';
 import { Search } from "lucide-react";
-import { usePollsRealtime } from '@/hooks/useRealTime.ts';
+import { useEnqueteRealtime } from '@/hooks/useRealTime.ts';
 import Filters from '@/components/Filters.jsx';
 
 export default function Home() {
-    const { polls, loading } = usePollsRealtime(8000);
+    const { polls, loading } = useEnqueteRealtime(8000);
     const [search, setSearch] = useState('');
     const safePolls = polls || [];
     const [category, setCategory] = useState('todas');

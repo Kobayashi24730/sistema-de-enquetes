@@ -5,7 +5,7 @@ import api from '../services/api.js';
 import { AuthContext } from '../context/AuthContext.jsx';
 import Resultados from '@/components/Resultados.jsx';
 import { Chart } from '@/components/Charts.jsx';
-import { getVotedPolls, saveVotedPoll } from '@/hooks/useRealTime.js'; // Importa persistência local
+import { getVotedEnquete, saveVotedEnquete } from "@/hooks/useEnqueteRealtime";
 
 // Estilos Fluent estritamente claros
 const fluentCard =
@@ -67,7 +67,7 @@ export default function EnqueteDetalhe() {
             });
 
             // 1. Grava no localStorage do navegador para bloquear votos futuros
-            saveVotedPoll(id);
+            saveVotedEnquete(id);
             setHasVotedLocal(true);
             setVotedOptionId(selectedOption);
 
