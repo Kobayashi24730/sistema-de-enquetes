@@ -1,19 +1,17 @@
 import { useState } from 'react';
 import Card from '@/components/Cards.jsx';
 import { Search } from "lucide-react";
-import { useEnqueteRealtime } from '@/hooks/useRealTime.ts';
+import { useEnqueteRealtime } from '@/hooks/useEnqueteRealtime';
 import Filters from '@/components/Filters.jsx';
 
 export default function Home() {
     const { enquetes, loading } = useEnqueteRealtime(8000);
     const [search, setSearch] = useState('');
-    const safePolls = polls || [];
     const [category, setCategory] = useState('todas');
     const [sort, setSort] = useState("recentes");
-    const filteredPolls = safePolls.filter((item) =>
-        item.title?.toLowerCase().includes(search.toLowerCase())
-    );
 
+    // ✅ Garante fallback seguro usando 'enquetes'
+    const safePolls = enquetes || [];
 
     const processedPolls = safePolls
         .filter((item) => {
@@ -36,7 +34,7 @@ export default function Home() {
             return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });
 
-    // 4. Cálculo da enquete em destaque no cabeçalho
+    // Cálculo da enquete em destaque no cabeçalho
     const topPoll = safePolls.reduce((max, item) => {
         const totalVotes = (item.options || item.opcoes || []).reduce(
             (acc, opt) => acc + Number(opt.votes || opt.votos || 0), 0
