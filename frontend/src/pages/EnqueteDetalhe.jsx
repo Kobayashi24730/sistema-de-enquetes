@@ -5,7 +5,7 @@ import api from '../services/api.js';
 import { AuthContext } from '../context/AuthContext.jsx';
 import Resultados from '@/components/Resultados.jsx';
 import { Chart } from '@/components/Charts.jsx';
-import { getVotedEnquete, saveVotedEnquete } from "@/hooks/useEnqueteRealtime";
+import { getVotedEnquete, saveVotedEnquete } from '@/hooks/useEnqueteRealtime';
 
 // Estilos Fluent estritamente claros
 const fluentCard =
@@ -28,8 +28,8 @@ export default function EnqueteDetalhe() {
     const [voting, setVoting] = useState(false);
 
     useEffect(() => {
-        // Checa no localStorage assim que abre a página
-        const localVotes = getVotedPolls();
+        // Checa no localStorage assim que abre a página usando a função correta
+        const localVotes = getVotedEnquete();
         if (localVotes.includes(id) || localVotes.includes(Number(id))) {
             setHasVotedLocal(true);
         }
@@ -110,7 +110,7 @@ export default function EnqueteDetalhe() {
     if (error || !poll) {
         return (
             <div className="max-w-3xl mx-auto p-12 text-center space-y-4">
-                <p className="text-sm font-medium text-red-600">{error || 'Enquete não encontrada efetue o login ou se registre.'}</p>
+                <p className="text-sm font-medium text-red-600">{error || 'Enquete não encontrada.'}</p>
                 <Link to="/" className="inline-flex items-center gap-2 text-xs font-semibold text-blue-600 hover:underline">
                     <ArrowLeft className="size-3.5" /> Voltar para a Home
                 </Link>
