@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Card from '@/components/Cards.jsx';
 import { Search } from "lucide-react";
-import { useEnqueteRealtime } from '@/hooks/useEnqueteRealtime';
+import { useEnqueteRealtime } from '@/hooks/useRealTime.ts';
 import Filters from '@/components/Filters.jsx';
 
 export default function Home() {
