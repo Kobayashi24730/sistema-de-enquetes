@@ -2,7 +2,7 @@ import { useContext, useState } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '@/services/api.js';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 export default function Perfil() {
     const { user, setUser, logout, loading } = useContext(AuthContext);
