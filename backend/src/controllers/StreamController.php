@@ -9,31 +9,30 @@ class StreamController {
         header('Content-Type: text/event-stream');
         header('Cache-Control: no-cache');
         header('Connection: keep-alive');
-        header('X-Accel-Buffering: no'); // Importante para NGINX/Vercel não segurar o buffer
+        header('X-Accel-Buffering: no');
 
         $db = Database::getConnection();
         $startTime = time();
-        $maxDuration = 300; // 5 minutos máximo por conexão SSE
+        $maxDuration = 300;
 
         while (true) {
-            // Fecha a conexão após o tempo limite para evitar vazamento de memória/processos
             if ((time() - $startTime) > $maxDuration) {
                 break;
             }
 
             if ($pollId) {
-                // Consulta para uma enquete específica
+                // ✅ Ajustado: po.enquete_id e ev.enquete_id
                 $stmt = $db->prepare("
                     SELECT po.id, po.option_text, COUNT(v.id) as votes
                     FROM enquetes_options po
                     LEFT JOIN enquete_votos v ON v.option_id = po.id
-                    WHERE po.poll_id = ?
+                    WHERE po.enquete_id = ?
                     GROUP BY po.id
                 ");
                 $stmt->execute([$pollId]);
                 $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
             } else {
-                // Consulta para todas as enquetes (usado pelo hook useEnqueteRealtime)
+                // ✅ Ajustado: eo.enquete_id
                 $stmt = $db->prepare("
                     SELECT e.*,
                         (
@@ -44,7 +43,7 @@ class StreamController {
                                     'votes', (SELECT COUNT(*) FROM enquete_votos ev WHERE ev.option_id = eo.id)
                                 )
                             )
-                            FROM enquetes_options eo WHERE eo.poll_id = e.id
+                            FROM enquetes_options eo WHERE eo.enquete_id = e.id
                         ) AS options
                     FROM enquetes e
                     ORDER BY e.created_at DESC
@@ -52,7 +51,6 @@ class StreamController {
                 $stmt->execute();
                 $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-                // Decodifica o JSON retornado do banco para enviar como objeto/array puro
                 foreach ($results as &$poll) {
                     $poll['options'] = json_decode($poll['options'] ?? '[]');
                 }
@@ -63,7 +61,6 @@ class StreamController {
             if (ob_get_level() > 0) ob_flush();
             flush();
 
-            // Espera 2 segundos antes do próximo envio
             sleep(2);
         }
     }

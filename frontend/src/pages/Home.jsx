@@ -5,7 +5,7 @@ import { useEnqueteRealtime } from '@/hooks/useRealTime.ts';
 import Filters from '@/components/Filters.jsx';
 
 export default function Home() {
-    const { polls, loading } = useEnqueteRealtime(8000);
+    const { enquetes, loading } = useEnqueteRealtime(8000);
     const [search, setSearch] = useState('');
     const safePolls = polls || [];
     const [category, setCategory] = useState('todas');
