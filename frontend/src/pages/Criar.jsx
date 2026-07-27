@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
 import {Link, useNavigate} from 'react-router-dom';
-import { Plus, Trash2, ChevronDown } from 'lucide-react';
+import {Plus, Trash2, ChevronDown, ArrowLeft} from 'lucide-react';
 import api from '@/services/api.js';
 import { AuthContext } from '@/context/AuthContext.jsx';
 
@@ -100,6 +100,11 @@ export default function Criar() {
 
     return (
         <div className="max-w-2xl mx-auto p-6 space-y-6">
+            <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-900 transition-colors">
+                <ArrowLeft className="size-3.5" />
+                Voltar
+            </Link>
+
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Nova enquete</h1>
                 <p className="text-muted-foreground mt-1">Mínimo de 2 opções e máximo de 8 opções.</p>
