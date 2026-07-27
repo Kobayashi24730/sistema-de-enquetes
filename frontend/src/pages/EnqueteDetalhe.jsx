@@ -5,7 +5,7 @@ import api from '../services/api.js';
 import { AuthContext } from '../context/AuthContext.jsx';
 import Resultados from '@/components/Resultados.jsx';
 import { Chart } from '@/components/Charts.jsx';
-import { getVotedEnquete, saveVotedEnquete } from '@/hooks/useEnqueteRealtime';
+import { getVotedEnquete, saveVotedEnquete } from '@/hooks/useRealTime.ts';
 
 // Estilos Fluent estritamente claros
 const fluentCard =
