@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api.js';
 
-const BASE_URL = api.defaults.baseURL || "http://localhost:8000";
+const BASE_URL = api.defaults.baseURL || "http://localhost:8080";
 
 // lista os votos do localStorage
 export const getVotedEnquete = () => {

@@ -9,7 +9,6 @@ export default function ForgotPassword() {
         e.preventDefault();
 
         const loadingToast = toast.loading('Enviando e-mail...');
-
         try {
             const response = await api.post('/forgot-password', { email });
 

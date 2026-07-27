@@ -1,28 +1,25 @@
 import React from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
-// Paleta estilo Microsoft Fluent (Azul principal + tons de apoio)
 const CHART_COLORS = [
-    '#0078D4', // Fluent Blue
+    '#0078D4',
     '#2B88D8',
     '#005A9E',
-    '#107C41', // Accent Green
-    '#5C2D91', // Accent Purple
-    '#D13438', // Accent Red
-    '#008272', // Teal
+    '#107C41',
+    '#5C2D91',
+    '#D13438',
+    '#008272',
     '#6B69D6'
 ];
 
 export function Chart({ options = [] }) {
-    // 1. Mapeia as opções do banco/API para o formato esperado pelo Recharts
+    //  Mapeia as opções enviasdas para o formato esperado pelo Recharts
     const chartData = options.map((opt) => ({
         name: opt.option_text,
         value: Number(opt.votes) || 0
     }));
-
-    // 2. Calcula o total de votos
+    // Calcula o total de votos
     const totalVotes = chartData.reduce((acc, opt) => acc + opt.value, 0);
-
     // Estilo Fluent UI para o container do Card
     const fluentCard = "w-full bg-white border border-neutral-200/80 rounded-lg p-5 shadow-sm";
 

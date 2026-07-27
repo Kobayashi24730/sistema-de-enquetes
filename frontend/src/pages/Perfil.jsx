@@ -2,6 +2,7 @@ import { useContext, useState } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '@/services/api.js';
+import { toast } from 'react-toastify';
 
 export default function Perfil() {
     const { user, setUser, logout, loading } = useContext(AuthContext);
@@ -40,9 +41,9 @@ export default function Perfil() {
         try {
             await api.put(`/usuarios/${user.id}`, { nome, email });
             setUser({ ...user, nome, email }); // Atualiza o estado global
-            alert('Perfil atualizado com sucesso!');
+            toast.success('Perfil atualizado com sucesso!');
         } catch (err) {
-            alert('Erro ao atualizar perfil.');
+            toast.error('Erro ao atualizar perfil.');
         }
     };
 
@@ -53,15 +54,10 @@ export default function Perfil() {
                 await api.delete(`/usuarios/${user.id}`);
                 logout(); // Desloga o usuário após deletar
             } catch (err) {
-                alert('Erro ao deletar conta.');
+                toast.error('Erro ao deletar conta.');
             }
         }
     };
-
-    const handleRecoverPassword = async () => {
-        return true;
-    }
-
     return (
         <div className="max-w-xl mx-auto my-8 p-6 bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col gap-6">
             {/* Cabeçalho */}
@@ -114,9 +110,7 @@ export default function Perfil() {
                 </div>
 
                 <button
-                    type="submit"
-                    className="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg shadow-sm transition-colors text-sm"
-                >
+                    type="submit" className="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg shadow-sm transition-colors text-sm">
                     Salvar Alterações
                 </button>
             </form>
@@ -125,13 +119,13 @@ export default function Perfil() {
 
             {/* Ações de Segurança / Conta */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                <button
+                <Link
                     type="button"
-                    onClick={handleRecoverPassword}
+                    to="/forgot-password"
                     className="w-full sm:w-auto text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline py-2 transition-colors"
                 >
                     Recuperar senha
-                </button>
+                </Link>
 
                 <button
                     type="button"

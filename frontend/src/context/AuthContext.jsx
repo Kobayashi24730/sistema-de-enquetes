@@ -40,15 +40,14 @@ export function AuthProvider({ children }) {
                 throw new Error("O servidor não retornou um token válido.");
             }
 
-            // 1. Salva no Storage
+            // Salva no Storage
             localStorage.setItem('@Enquetes:token', token);
-
-            // 2. Seta o header padrão do Axios para as próximas chamadas
+            // Seta o header padrão do Axios para as próximas chamadas
             api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             setUser(userData);
         } catch (error) {
             console.error("Erro dentro do AuthContext -> login:", error);
-            throw error; // Re-lança para o Auth.jsx capturar no catch
+            throw error;
         }
     };
 

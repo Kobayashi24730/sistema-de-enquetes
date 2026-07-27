@@ -5,15 +5,13 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-    // Chave corrigida para bater com o AuthContext
     const token = localStorage.getItem('@Enquetes:token');
-
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
 }, (error) => {
+    // em caso de erro ele retorna o erro para quem chamou a api
     return Promise.reject(error);
 });
 

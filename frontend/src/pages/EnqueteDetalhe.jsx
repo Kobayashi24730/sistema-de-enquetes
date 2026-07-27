@@ -8,10 +8,8 @@ import { Chart } from '@/components/Charts.jsx';
 import { getVotedEnquete, saveVotedEnquete } from '@/hooks/useRealTime.ts';
 import toast from "react-hot-toast";
 
-// Estilos Fluent
 const fluentCard =
-    'rounded-lg border border-neutral-200/80 bg-white p-6 space-y-4 shadow-[0_2px_4px_rgba(0,0,0,0.04)]';
-
+    'rounded-lg border border-neutral-200/80 bg-white p-6 space-y-4 shadow-[0_2px_4px_rgba(0,0,0,0.04)]'
 const fluentButtonSecondary =
     'inline-flex items-center gap-2 rounded bg-white border border-neutral-300 px-3.5 py-1.5 text-xs font-semibold text-neutral-800 transition-all hover:bg-neutral-100 hover:border-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600';
 
@@ -19,7 +17,6 @@ export default function EnqueteDetalhe() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
-
     const [enquete, setEnquete] = useState(null);
     const [loadingEnquete, setLoadingEnquete] = useState(true);
     const [error, setError] = useState('');
@@ -27,6 +24,7 @@ export default function EnqueteDetalhe() {
     const [votedOptionId, setVotedOptionId] = useState(null);
     const [hasVotedLocal, setHasVotedLocal] = useState(false);
     const [voting, setVoting] = useState(false);
+    console.log(enquete);
 
     useEffect(() => {
         // Checa no localStorage assim que abre a página usando a função correta.

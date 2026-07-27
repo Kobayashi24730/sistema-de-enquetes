@@ -10,18 +10,16 @@ class User {
         $this->db = $db;
     }
 
-    // Buscar usuário por e-mail (usado no Login)
+    // Buscar usuário por e-mail
     public function findByEmail(string $email) {
         $stmt = $this->db->prepare("SELECT * FROM users WHERE email = :email");
         $stmt->execute(['email' => $email]);
         return $stmt->fetch();
     }
 
-    // Criar novo usuário (usado no Cadastro)
+    // Criar novo usuário
     public function create(array $data) {
-        $stmt = $this->db->prepare(
-            "INSERT INTO users (name, email, password) VALUES (:name, :email, :password)"
-        );
+        $stmt = $this->db->prepare( "INSERT INTO users (name, email, password) VALUES (:name, :email, :password)" );
         return $stmt->execute([
             'name'     => $data['name'],
             'email'    => $data['email'],

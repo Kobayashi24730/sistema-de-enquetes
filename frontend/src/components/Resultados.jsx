@@ -32,10 +32,8 @@ export default function Resultados({ enquete, votedOptionId }) {
                 const optionTexto = option.option_text;
                 const optionVotos = Number(option.votes ?? 0);
                 const porcentagem = total > 0 ? (optionVotos / total) * 100 : 0;
-
                 // Checa se esta é a opção escolhida pelo usuário
                 const isVoted = Number(votedOptionId) === Number(optionId);
-
                 // Seleciona uma cor do array circularmente baseada no índice
                 const barColor = chart_color[index % chart_color.length];
 

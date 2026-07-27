@@ -5,9 +5,6 @@ use PDO;
 use PDOException;
 use Throwable;
 
-/**
- * Controller responsável por gerenciar operações relacionadas aos usuários.
- */
 class UserController {
     private $db;
 
@@ -15,26 +12,24 @@ class UserController {
         $this->db = $databaseConnection;
     }
 
+    // POST -- Criação de um novo usuário
     public function create() {
         $data = json_decode(file_get_contents("php://input"), true);
-
-        // Aceita campos tanto em português (nome/senha) quanto em inglês (name/password) do front-end
-        $nome = $data['nome'] ?? $data['name'] ?? null;
+        $nome = $data['nome'] ?? $data['name'] ??  null;
         $email = $data['email'] ?? null;
-        $senha = $data['senha'] ?? $data['password'] ?? null;
+        $senha = $data['senha'] ?? $data['password'] ??  null;
 
+        // Validação de dados
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             http_response_code(400);
             echo json_encode(['error' => 'Email inválido']);
             return;
         }
-
         if (strlen($senha) < 6) {
             http_response_code(400);
             echo json_encode(['error' => 'Senha deve ter no mínimo 6 caracteres']);
             return;
         }
-
         if (empty($nome) || empty($email) || empty($senha)) {
             http_response_code(400);
             echo json_encode(['error' => 'Nome, e-mail e senha são obrigatórios.']);
@@ -42,23 +37,20 @@ class UserController {
         }
 
         try {
-            // 1. Verifica se e-mail já existe na tabela 'users'
+            // Verifica se o email já existe
             $stmt = $this->db->prepare("SELECT id FROM users WHERE email = :email");
             $stmt->execute([':email' => $email]);
-
             if ($stmt->fetch()) {
                 http_response_code(400);
                 echo json_encode(['error' => 'E-mail já cadastrado.']);
                 return;
             }
-
-            // 2. Hash da senha
+            // Hash da senha
             $passwordHash = password_hash($senha, PASSWORD_BCRYPT);
 
-            // 3. Insere na tabela 'users' com os nomes de colunas corretos (name, email, password)
+            // Insere o novo usuário
             $query = "INSERT INTO users (name, email, password) VALUES (:name, :email, :password)";
             $stmt = $this->db->prepare($query);
-
             $stmt->execute([
                 ':name'     => $nome,
                 ':email'    => $email,
@@ -73,10 +65,9 @@ class UserController {
         }
     }
 
-    // BUSCAR PERFIL POR ID
+    // GET -- buscar perfil por ID
     public function show($id = null) {
         $userId = $id ?? $_GET['id'] ?? null;
-
         if (!$userId) {
             http_response_code(400);
             echo json_encode(['error' => 'ID do usuário não informado.']);
@@ -87,7 +78,6 @@ class UserController {
             $stmt = $this->db->prepare("SELECT id, name AS nome, email, created_at FROM users WHERE id = :id");
             $stmt->execute([':id' => $userId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
             if (!$user) {
                 http_response_code(404);
                 echo json_encode(['error' => 'Usuário não encontrado.']);
@@ -101,21 +91,20 @@ class UserController {
         }
     }
 
-    // UPDATE (ATUALIZAR DADOS DO USUÁRIO)
+    // put -- atualizar dados do usuário
     public function update($id = null) {
         $data = json_decode(file_get_contents("php://input"), true);
-
         $userId = $id ?? $data['id'] ?? null;
         $nome = $data['nome'] ?? $data['name'] ?? null;
         $email = $data['email'] ?? null;
         $senha = $data['senha'] ?? $data['password'] ?? null;
 
+        // Validação de dados
         if (!$userId) {
             http_response_code(400);
             echo json_encode(['error' => 'ID do usuário não informado.']);
             return;
         }
-
         if (empty($nome) || empty($email)) {
             http_response_code(400);
             echo json_encode(['error' => 'Nome e e-mail são obrigatórios.']);
@@ -139,9 +128,9 @@ class UserController {
                     ':id'    => $userId
                 ];
             }
-
             $stmt = $this->db->prepare($query);
             $stmt->execute($params);
+
             echo json_encode(['message' => 'Dados do usuário atualizados com sucesso!']);
         } catch (Throwable $e) {
             http_response_code(500);
@@ -149,7 +138,7 @@ class UserController {
         }
     }
 
-    // DELETE (EXCLUIR USUÁRIO)
+    // DELETE -- Exclusão de um usuário
     public function delete($id = null) {
         $userId = $id ?? $_GET['id'] ?? null;
 
@@ -170,13 +159,13 @@ class UserController {
     }
 
 
-    // LOGIN (AUTENTICAÇÃO)
+    // LOGIN -- Autenticação de usuário
     public function login() {
         $data = json_decode(file_get_contents("php://input"), true);
-
         $email = $data['email'] ?? null;
         $senha = $data['senha'] ?? $data['password'] ?? null;
 
+        // Validação de dados
         if (empty($email) || empty($senha)) {
             http_response_code(400);
             echo json_encode(['error' => 'E-mail e senha são obrigatórios.']);
@@ -194,7 +183,6 @@ class UserController {
                 return;
             }
             $secretKey = $_ENV['JWT_SECRET'] ?? $_SERVER['JWT_SECRET'] ?? throw new Exception('JWT_SECRET não configurado');
-
             $payload = [
                 'iss'  => 'localhost',
                 'aud'  => 'localhost',
@@ -206,7 +194,6 @@ class UserController {
                     'email' => $user['email']
                 ]
             ];
-
             $jwt = \Firebase\JWT\JWT::encode($payload, $secretKey, 'HS256');
 
             http_response_code(200);

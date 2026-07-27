@@ -50,7 +50,7 @@ export default function Criar() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // adiciona uma nova opção
+    // seta os valores das opções
     const handleOptionChange = (index, value) => {
         const newOptions = [...options];
         newOptions[index] = value;

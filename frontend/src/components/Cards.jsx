@@ -3,8 +3,6 @@ import { Clock, User2, BarChart3, ChevronRight, CheckCircle2 } from "lucide-reac
 import Resultados from "@/components/Resultados.jsx";
 import { getVotedEnquete } from "@/hooks/useRealTime";
 
-
-// Card de Enquete
 export default function Card({ enquete }) {
     if (!enquete) {
         return (
@@ -14,15 +12,14 @@ export default function Card({ enquete }) {
         );
     }
 
-    // 1. Verifica pelo hook se o usuário já votou
+    // Verifica pelo hook se o usuário já votou
     const votedEnquete = getVotedEnquete();
     const hasVoted = enquete.hasVoted ?? votedEnquete.includes(enquete.id);
-
-    // Apenas verifica se já encerrou
+    // verifica se já encerrou
     const isExpired = enquete.expires_at ? new Date(enquete.expires_at) < new Date() : false;
-
-    // Calcula ou recupera o total de votos
-    const options = enquete.options || enquete.opcoes || [];
+    // coleção de opções
+    const options = enquete.options || [];
+    // calcula total de votos
     const totalVotes = enquete.total_votes ?? options.reduce((acc, opt) => acc + Number(opt.votes ?? opt.votos ?? 0), 0);
 
     return (

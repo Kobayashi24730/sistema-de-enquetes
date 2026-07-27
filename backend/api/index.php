@@ -2,16 +2,14 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// 1. Carrega o .env se existir
+// Carrega o .env se existir
 if (class_exists('Dotenv\Dotenv')) {
     $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
     $dotenv->safeLoad();
 }
-
-// 2. Lógica de CORS Dinâmico para Vercel e Dev
+// Lógica de CORS Dinâmico para Vercel e Dev
 $http_origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$client_url  = $_ENV['CLIENT_URL'] ?? $_SERVER['CLIENT_URL'] ?? getenv('CLIENT_URL') ?: 'http://localhost:3000';
-
+$client_url  = $_ENV['CLIENT_URL'] ?? $_SERVER['CLIENT_URL'] ?? getenv('CLIENT_URL') ?: 'http://localhost:5173';
 if (
     preg_match('/^https:\/\/.*\.vercel\.app$/', $http_origin) ||
     $http_origin === 'http://localhost:3000' ||
@@ -21,31 +19,27 @@ if (
 } else {
     header("Access-Control-Allow-Origin: " . $client_url);
 }
-
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Cache-Control, Accept");
 header("Access-Control-Allow-Credentials: true");
-
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// 3. Captura e Normalização da Rota
+// Captura e Normalização da Rota
 $method = $_SERVER['REQUEST_METHOD'];
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
 // REMOVE O PREFIXO /api SE EXISTIR NA URL
 if (str_starts_with($uri, '/api')) {
     $uri = substr($uri, 4);
 }
-
 $route = rtrim($uri, '/');
 if (empty($route)) {
     $route = '/';
 }
 
-// 4. Inicialização de Serviços e Banco de Dados
+// Inicialização de Serviços e Banco de Dados
 try {
     $pdo = \Config\Database::getConnection();
     \Config\Migration::run($pdo);
@@ -64,7 +58,7 @@ try {
     exit();
 }
 
-// 5. Roteamento da Aplicação
+// Roteamento da rotas
 switch ($route) {
     case '/stream':
         if ($method === 'GET') {

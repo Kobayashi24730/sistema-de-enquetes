@@ -4,7 +4,6 @@ import { ChevronDown, Sparkles, Clock, Flame } from 'lucide-react';
 export default function Filters({ onCategoryChange, onSortChange }) {
     const [category, setCategory] = useState('todas');
     const [sort, setSort] = useState('recentes');
-
     const categories = [
         { id: 'todas', label: 'Todas as categorias' },
         { id: 'tecnologia', label: 'Tecnologia' },
@@ -13,11 +12,13 @@ export default function Filters({ onCategoryChange, onSortChange }) {
         { id: 'geral', label: 'Geral' }
     ];
 
+    // Atualiza o estado de sort e chama a função onSortChange
     const handleSort = (type) => {
         setSort(type);
         if (onSortChange) onSortChange(type);
     };
 
+    // Atualiza o estado de category e chama a função onCategoryChange
     const handleCategory = (e) => {
         const val = e.target.value;
         setCategory(val);

@@ -8,16 +8,13 @@ use PHPMailer\PHPMailer\Exception;
 use PDO;
 
 class ForgotPasswordController {
-
-    // PASSO A: Solicitar a recuperação (Gera Token e Envia E-mail)
-    // Mantido o nome sendResetLink para casar com o index.php (ou atualize seu index.php)
+    // Envia o link de recuperação de senha para o email do usuário
     public function sendResetLink() {
         header('Content-Type: application/json; charset=utf-8');
 
         try {
             $data = json_decode(file_get_contents('php://input'), true);
             $email = filter_var($data['email'] ?? '', FILTER_VALIDATE_EMAIL);
-
             if (!$email) {
                 http_response_code(400);
                 echo json_encode(['error' => 'E-mail inválido.']);
@@ -25,33 +22,28 @@ class ForgotPasswordController {
             }
 
             $db = Database::getConnection();
-
-            // 1. Verifica se o e-mail existe no banco
+            // Verifica se o e-mail existe no banco
             $stmt = $db->prepare("SELECT id, name FROM users WHERE email = ?");
             $stmt->execute([$email]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            // Resposta genérica de segurança caso não exista
             if (!$user) {
                 http_response_code(200);
                 echo json_encode(['message' => 'Se o e-mail estiver cadastrado, você receberá as instruções.']);
                 return;
             }
 
-            // 2. Gera token seguro de 64 caracteres hexadecimais
+            // Gera token seguro
             $token = bin2hex(random_bytes(32));
             $expiresAt = date('Y-m-d H:i:s', strtotime('+30 minutes'));
 
-            // 3. Salva o token no banco
+            // Salva o token no banco
             $stmtReset = $db->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)");
             $stmtReset->execute([$email, $token, $expiresAt]);
 
-            // 4. Envia o e-mail com o link de recuperação
+            // Envia o e-mail com o link de recuperação
             $frontendUrl = $_ENV['CLIENT_URL'] ?? getenv('CLIENT_URL') ?: 'http://localhost:3000';
             $link = rtrim($frontendUrl, '/') . "/reset-password?token=" . $token;
-
             $mailSent = $this->sendResetEmail($email, $user['name'], $link);
-
             if (!$mailSent) {
                 http_response_code(500);
                 echo json_encode(['error' => 'Não foi possível enviar o e-mail no momento. Tente novamente mais tarde.']);
@@ -60,19 +52,17 @@ class ForgotPasswordController {
 
             http_response_code(200);
             echo json_encode(['message' => 'Instruções enviadas para o seu e-mail!']);
-
         } catch (\Throwable $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Erro interno no servidor: ' . $e->getMessage()]);
         }
     }
 
-    // Alias para caso você utilize requestReset em outro local
     public function requestReset() {
         $this->sendResetLink();
     }
 
-    // PASSO B: Efetuar a troca de senha
+    // Efetuar a troca de senha
     public function resetPassword() {
         header('Content-Type: application/json; charset=utf-8');
 
@@ -89,7 +79,7 @@ class ForgotPasswordController {
 
             $db = Database::getConnection();
 
-            // 1. Valida se o token existe e NÃO expirou
+            // Valida se o token existe e não expirou
             $stmt = $db->prepare("SELECT email FROM password_resets WHERE token = ? AND expires_at > NOW() ORDER BY id DESC LIMIT 1");
             $stmt->execute([$token]);
             $resetRequest = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -99,12 +89,8 @@ class ForgotPasswordController {
                 echo json_encode(['error' => 'Link inválido ou expirado. Solicite uma nova recuperação.']);
                 return;
             }
-
             $email = $resetRequest['email'];
-
-            // 2. Criptografa a nova senha com BCRYPT
             $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
-
             $db->beginTransaction();
 
             // Atualiza a senha do usuário
@@ -114,12 +100,9 @@ class ForgotPasswordController {
             // Limpa todos os tokens desse e-mail para não serem reutilizados
             $stmtDelete = $db->prepare("DELETE FROM password_resets WHERE email = ?");
             $stmtDelete->execute([$email]);
-
             $db->commit();
-
             http_response_code(200);
             echo json_encode(['message' => 'Senha alterada com sucesso! Você já pode fazer login.']);
-
         } catch (\Throwable $e) {
             if (isset($db) && $db->inTransaction()) {
                 $db->rollBack();
@@ -129,17 +112,19 @@ class ForgotPasswordController {
         }
     }
 
-    // Função interna que envia o e-mail e retorna boolean
+    // função para enviar o email de recuperação
     private function sendResetEmail($toEmail, $toName, $resetLink): bool {
         $mail = new PHPMailer(true);
 
         try {
+            // Leitura de variáveis de ambiente usando getenv() com suporte a $_ENV
             $host     = getenv('SMTP_HOST')     ?: ($_ENV['SMTP_HOST']     ?? 'smtp.gmail.com');
             $username = getenv('SMTP_USER')     ?: ($_ENV['SMTP_USER']     ?? '');
             $password = getenv('SMTP_PASS')     ?: ($_ENV['SMTP_PASS']     ?? '');
             $port     = getenv('SMTP_PORT')     ?: ($_ENV['SMTP_PORT']     ?? 587);
             $fromName = getenv('SMTP_FROM_NAME')?: ($_ENV['SMTP_FROM_NAME']?? 'Sistema de Enquetes');
 
+            // Configuração do PHPMailer
             $mail->isSMTP();
             $mail->Host       = $host;
             $mail->SMTPAuth   = true;
@@ -149,9 +134,11 @@ class ForgotPasswordController {
             $mail->Port       = (int) $port;
             $mail->CharSet    = 'UTF-8';
 
+            // Remetente
             $mail->setFrom($username, $fromName);
             $mail->addAddress($toEmail, $toName);
 
+            // Conteúdo
             $mail->isHTML(true);
             $mail->Subject = "Recuperação de Senha";
             $mail->Body    = "

@@ -11,7 +11,6 @@ use PDO;
 class VotoController {
 
     public function vote() {
-        // 1. Tenta obter o usuário se estiver autenticado, ou define fallback
         $voterName = 'Um visitante';
         try {
             $user = AuthMiddleware::authenticate();
@@ -36,11 +35,11 @@ class VotoController {
         $db->beginTransaction();
 
         try {
-            // 2. Incrementa o voto na opção escolhida
+            // Incrementa o voto na opção escolhida
             $stmtVote = $db->prepare("UPDATE enquetes_options SET votes = votes + 1 WHERE id = ? AND enquete_id = ?");
             $stmtVote->execute([$optionId, $enqueteId]);
 
-            // 3. Busca dados do criador + título da enquete
+            // Busca dados do criador e o título da enquete
             $stmtOwner = $db->prepare("
                 SELECT e.title, u.name AS criador_nome, u.email AS criador_email
                 FROM enquetes e
@@ -60,7 +59,7 @@ class VotoController {
             // Confirma a alteração no banco de dados
             $db->commit();
 
-            // 4. Dispara a notificação por e-mail se o criador tiver e-mail válido
+            // Dispara a notificação por e-mail se o criador tiver e-mail válido
             if (!empty($enqueteInfo['criador_email'])) {
                 $this->sendVoteNotificationEmail(
                     $enqueteInfo['criador_email'],
@@ -72,7 +71,6 @@ class VotoController {
 
             http_response_code(200);
             echo json_encode(['message' => 'Voto computado com sucesso!']);
-
         } catch (\Exception $e) {
             $db->rollBack();
             http_response_code(500);
@@ -80,6 +78,7 @@ class VotoController {
         }
     }
 
+    // função para enviar o email de notificação de voto
     private function sendVoteNotificationEmail($toEmail, $toName, $voterName, $pollTitle) {
         $mail = new PHPMailer(true);
 
@@ -101,7 +100,7 @@ class VotoController {
             $mail->Port       = (int) $port;
             $mail->CharSet    = 'UTF-8';
 
-            // Remetente (Obrigatoriamente o mesmo e-mail do Username no caso do Gmail)
+            // Remetente
             $mail->setFrom($username, $fromName);
             $mail->addAddress($toEmail, $toName);
 
@@ -119,7 +118,6 @@ class VotoController {
 
             $mail->send();
         } catch (Exception $e) {
-            // Log do erro no servidor sem parar a resposta para o React
             error_log("Erro no envio do e-mail de notificação: " . $mail->ErrorInfo);
         }
     }

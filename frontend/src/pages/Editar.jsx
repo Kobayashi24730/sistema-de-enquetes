@@ -24,15 +24,14 @@ export default function Editar() {
     const navigate = useNavigate();
     const { id } = useParams();
     const [formData, setFormData] = useState({
-        title: '',
-        category: 'geral',
-        expiresAt: ''
+        title: '', category: 'geral', expiresAt: ''
     });
     const [options, setOptions] = useState(['', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const { user } = useContext(AuthContext);
 
+    // carrega os dados da enquete
     useEffect(()  => {
         async function fetchEnquetes() {
             try {
@@ -77,22 +76,27 @@ export default function Editar() {
         );
     }
 
+    // seta os dados do formulário
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    // seta os valores das opções
     const handleOptionChange = (index, value) => {
         const newOptions = [...options];
         newOptions[index] = value;
         setOptions(newOptions);
     };
 
+    // adiciona uma nova opção
     const addOption = () => {
         if (options.length < 8) {
             setOptions([...options, '']);
         }
     };
+
+    // remove uma opção
     const removeOption = (index) => {
         if (options.length > 2) {
             setOptions(options.filter((_, i) => i !== index));
@@ -103,14 +107,12 @@ export default function Editar() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-
-        // Validação local de opções vazias
+        // Validação de opções vazias
         const filteredOptions = options.map((opt) => opt.trim()).filter((opt) => opt !== '');
         if (filteredOptions.length < 2) {
             setError('Preencha pelo menos 2 opções válidas.');
             return;
         }
-
         setLoading(true);
 
         try {
@@ -120,7 +122,6 @@ export default function Editar() {
                 expires_at: formData.expiresAt || null,
                 options: filteredOptions
             });
-
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.error || 'Erro ao editar enquete.');

@@ -15,9 +15,7 @@ class AuthMiddleware {
             echo json_encode(['error' => 'Token JWT não fornecido']);
             exit;
         }
-
         $token = $matches[1];
-
         try {
             $secretKey = $_ENV['JWT_SECRET'] ?? $_SERVER['JWT_SECRET'] ?? getenv('JWT_SECRET') ?: throw new Exception('JWT_SECRET não configurado');
             $decoded = JWT::decode($token, new Key($secretKey, 'HS256'));

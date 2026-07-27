@@ -13,9 +13,7 @@ export default function Header() {
         logout();
         navigate("/auth");
     };
-
     const isActive = (path) => location.pathname === path;
-
     return (
         <header className="sticky top-0 z-30 border-b border-border/70 bg-background/80 backdrop-blur-xl">
             <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
@@ -27,7 +25,7 @@ export default function Header() {
                     <span className="font-display text-lg font-bold tracking-tight">Enquetes</span>
                 </Link>
 
-                {/* Navegação Desktop (visível apenas em telas md+) */}
+                {/* Navegação Desktop */}
                 <nav className="hidden items-center gap-1 text-sm md:flex">
                     <Link
                         to="/"
@@ -51,7 +49,7 @@ export default function Header() {
                     </Link>
                 </nav>
 
-                {/* Ações Direitas (Desktop + Mobile) */}
+                {/* componentes de ações  */}
                 <div className="flex items-center gap-2">
                     <Link
                         to="/criar"
@@ -79,7 +77,7 @@ export default function Header() {
                         </Link>
                     )}
 
-                    {/* Botão do Menu Hambúrguer (Mobile) */}
+                    {/* Botão do Menu Hambúrguer, apenas para mobile */}
                     <button
                         type="button"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
