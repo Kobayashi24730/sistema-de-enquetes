@@ -15,7 +15,7 @@ export default function Card({ enquete }) {
     }
 
     // 1. Verifica pelo hook se o usuário já votou
-    const votedEnquete = getVotedEnquetes();
+    const votedEnquete = getVotedEnquete();
     const hasVoted = enquete.hasVoted ?? votedEnquete.includes(enquete.id);
 
     // Apenas verifica se já encerrou
