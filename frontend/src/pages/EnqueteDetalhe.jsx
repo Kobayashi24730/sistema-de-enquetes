@@ -110,13 +110,17 @@ export default function EnqueteDetalhe() {
         );
     }
 
-    if (error || !enquete || !user) {
+    if (!user) {
         return (
-            <div className="max-w-3xl mx-auto p-12 text-center space-y-4">
-                <p className="text-sm font-medium text-red-600">{error || 'Não foi possivel acessar essa pagina.'}</p>
-                <Link to="/" className="inline-flex items-center gap-2 text-xs font-semibold text-blue-600 hover:underline">
-                    <ArrowLeft className="size-3.5" /> Voltar para a Home e tente logar/registrar-se
-                </Link>
+            <div className="min-h-[60vh] flex items-center justify-center p-4">
+                <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg border border-gray-100 text-center flex flex-col items-center gap-5">
+                    <div>
+                        <p className="text-sm text-gray-500 mt-1">Por favor, faça login para acessar as enquetes e votar.</p>
+                    </div>
+                    <Link to="/auth" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm transition-colors text-sm text-center inline-block">
+                        Fazer Login
+                    </Link>
+                </div>
             </div>
         );
     }
