@@ -12,7 +12,7 @@ export default function Card({ enquete }) {
         );
     }
 
-    // Garante que opções sejam SEMPRE um array
+    // Garante que opções sejam sempre um array
     let options = enquete.options || [];
     if (typeof options === "string") {
         try {
@@ -24,12 +24,10 @@ export default function Card({ enquete }) {
 
     // Injeta options parseadas de volta no objeto enquete
     const safeEnquete = { ...enquete, options };
-
     // Verifica se já votou
     const votedEnquete = getVotedEnquete();
     const hasVoted = safeEnquete.hasVoted ?? votedEnquete.includes(safeEnquete.id);
     const isExpired = safeEnquete.expires_at ? new Date(safeEnquete.expires_at) < new Date() : false;
-
     // Calcula total de votos
     const totalVotes = safeEnquete.total_votes ?? options.reduce((acc, opt) => acc + Number(opt.votes ?? opt.votos ?? 0), 0);
 

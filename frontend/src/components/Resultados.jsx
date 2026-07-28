@@ -41,7 +41,6 @@ export default function Resultados({ enquete, votedOptionId }) {
 
                 // Calcula a porcentagem com base no total somado
                 const porcentagem = total > 0 ? (optionVotos / total) * 100 : 0;
-
                 const isVoted = Number(votedOptionId) === Number(optionId);
                 const barColor = chart_color[index % chart_color.length];
 

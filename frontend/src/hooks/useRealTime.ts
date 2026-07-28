@@ -38,13 +38,10 @@ export function useEnqueteRealtime() {
         setUserVotes((prev) => [...prev, enqueteId]);
     }, []);
 
-    // Tratamento e normalização robusta das enquetes e opções
     const processEnquetesWithVoteStatus = useCallback((dataList) => {
         const localVotes = getVotedEnquete();
-
         return (dataList || []).map((enquete) => {
             let parsedOptions = enquete.options;
-
             // Converte string JSON vinda do MySQL/PHP
             if (parsedOptions && typeof parsedOptions === 'string') {
                 try {
@@ -53,7 +50,6 @@ export function useEnqueteRealtime() {
                     parsedOptions = [];
                 }
             }
-
             if (!Array.isArray(parsedOptions)) {
                 parsedOptions = [];
             }
@@ -66,10 +62,8 @@ export function useEnqueteRealtime() {
                     votes: Number(rawVotes) || 0
                 };
             });
-
             // Soma forçada para não depender de total_votes zerado da API
             const calculatedTotal = normalizedOptions.reduce((acc, opt) => acc + opt.votes, 0);
-
             return {
                 ...enquete,
                 options: normalizedOptions,
@@ -99,8 +93,6 @@ export function useEnqueteRealtime() {
 
     useEffect(() => {
         let eventSource = null;
-
-        // Carga inicial via REST
         fetchEnquetes(true);
 
         const connect = () => {
@@ -110,9 +102,7 @@ export function useEnqueteRealtime() {
                 try {
                     // Ignora eventos de keep-alive enviados como comentário pelo PHP
                     if (!event.data || event.data.trim() === "" || event.data.startsWith(":")) return;
-
                     const data = JSON.parse(event.data);
-                    console.log("debug SSE: ",data);
                     if (Array.isArray(data) && data.length > 0) {
                         const processed = processEnquetesWithVoteStatus(data);
                         setEnquetes(processed);
@@ -122,7 +112,6 @@ export function useEnqueteRealtime() {
                     console.error('Erro ao processar JSON do SSE:', err);
                 }
             };
-
             eventSource.onerror = (err) => {
             };
         };
@@ -134,7 +123,7 @@ export function useEnqueteRealtime() {
                 eventSource.close();
             }
         };
-    }, []); // Array VAZIO absoluto
+    }, []);
 
     return {
         enquetes,

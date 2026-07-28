@@ -67,7 +67,6 @@ class StreamController {
                         $results = [];
                     }
                 } else {
-                    // Mesma query de PollController::index()
                     $stmt = $db->prepare("
                         SELECT e.id, e.title, e.description, e.created_at, e.user_id,
                                COALESCE(e.category, 'Geral') AS category, u.name AS criador
