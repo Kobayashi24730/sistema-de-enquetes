@@ -27,7 +27,7 @@ class StreamController {
 
         $db = Database::getConnection();
         $startTime = time();
-        $maxDuration = 25; // Limite para evitar timeouts em Serverless/Apache/Nginx
+        $maxDuration = 8;
 
         while (true) {
             // Se atingir o tempo máximo do loop, encerra suavemente para o frontend reconectar sem erro

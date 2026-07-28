@@ -87,7 +87,7 @@ export function useEnqueteRealtime(intervalo = 3000) {
             eventSource.onerror = (error) => {
                 console.warn('Conexão SSE perdida. Tentando reconectar em 5 segundos...', error);
                 eventSource.close();
-                reconnectTimeout = setTimeout(() => { connectSSE(); }, 5000);
+                reconnectTimeout = setTimeout(() => { connectSSE(); }, 3000);
             };
         };
 
