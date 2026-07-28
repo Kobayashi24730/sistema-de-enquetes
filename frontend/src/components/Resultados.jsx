@@ -1,5 +1,3 @@
-
-// Constante com as cores do gráfico
 const chart_color = [
     "var(--color-chart-1, #2563eb)",
     "var(--color-chart-2, #3b82f6)",
@@ -13,33 +11,42 @@ const chart_color = [
 
 export default function Resultados({ enquete, votedOptionId }) {
     if (!enquete) return null;
-    const options = enquete.options;
+
+    // Garante que opções sejam um array
+    let options = enquete.options || [];
+    if (typeof options === "string") {
+        try {
+            options = JSON.parse(options);
+        } catch {
+            options = [];
+        }
+    }
+
+    if (!Array.isArray(options) || options.length === 0) {
+        return <p className="text-xs text-neutral-400">Sem opções cadastradas</p>;
+    }
 
     // Soma total de votos
     const total = options.reduce((acc, opt) => {
-        const votes = Number(opt.votes ?? 0);
+        const votes = Number(opt.votes ?? opt.votos ?? 0);
         return acc + votes;
     }, 0);
-
-    if (options.length === 0) {
-        return <p className="text-xs text-neutral-400">Sem opções cadastradas</p>;
-    }
 
     return (
         <ul className="space-y-3">
             {options.map((option, index) => {
                 const optionId = option.id;
-                const optionTexto = option.option_text;
-                const optionVotos = Number(option.votes ?? 0);
+                const optionTexto = option.option_text || option.texto || "Opção";
+                const optionVotos = Number(option.votes ?? option.votos ?? 0);
+
+                // Calcula a porcentagem com base no total somado
                 const porcentagem = total > 0 ? (optionVotos / total) * 100 : 0;
-                // Checa se esta é a opção escolhida pelo usuário
+
                 const isVoted = Number(votedOptionId) === Number(optionId);
-                // Seleciona uma cor do array circularmente baseada no índice
                 const barColor = chart_color[index % chart_color.length];
 
                 return (
-                    <li key={optionId} className="space-y-1.5">
-                        {/* Texto da opção, votos e porcentagem */}
+                    <li key={optionId || index} className="space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
                             <span className={`font-medium ${isVoted ? 'text-blue-600 font-semibold' : 'text-neutral-700'}`}>
                                 {optionTexto} {isVoted && '✓'}

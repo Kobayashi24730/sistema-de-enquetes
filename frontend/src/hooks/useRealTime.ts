@@ -3,7 +3,7 @@ import api from '../services/api.js';
 
 const BASE_URL = api.defaults.baseURL || "http://localhost:8080";
 
-// lista os votos do localStorage
+// Lista os votos do localStorage
 export const getVotedEnquete = () => {
     try {
         const voted = localStorage.getItem('voted_enquete');
@@ -13,7 +13,7 @@ export const getVotedEnquete = () => {
     }
 };
 
-// Salva o voto do usuário localmente se ele ainda não votou naquela enquete
+// Salva o voto do usuário localmente
 export const saveVotedEnquete = (enqueteId) => {
     try {
         const voted = getVotedEnquete();
@@ -26,28 +26,60 @@ export const saveVotedEnquete = (enqueteId) => {
     }
 };
 
-
-export function useEnqueteRealtime(intervalo = 3000) {
+export function useEnqueteRealtime() {
     const [enquetes, setEnquetes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userVotes, setUserVotes] = useState(getVotedEnquete());
     const isFetchingRef = useRef(false);
 
-    // Função para registrar o voto do usuário e atualizar a tela imediatamente
+    // Registrar voto local
     const recordVote = useCallback((enqueteId) => {
         saveVotedEnquete(enqueteId);
         setUserVotes((prev) => [...prev, enqueteId]);
     }, []);
 
-    // Função utilitária para mapear enquetes injetando o status de `hasVoted`
+    // Tratamento e normalização robusta das enquetes e opções
     const processEnquetesWithVoteStatus = useCallback((dataList) => {
         const localVotes = getVotedEnquete();
-        return (dataList || []).map((enquete) => ({
-            ...enquete,
-            hasVoted: localVotes.includes(enquete.id)
-        }));
+
+        return (dataList || []).map((enquete) => {
+            let parsedOptions = enquete.options;
+
+            // Converte string JSON vinda do MySQL/PHP
+            if (parsedOptions && typeof parsedOptions === 'string') {
+                try {
+                    parsedOptions = JSON.parse(parsedOptions);
+                } catch (e) {
+                    parsedOptions = [];
+                }
+            }
+
+            if (!Array.isArray(parsedOptions)) {
+                parsedOptions = [];
+            }
+
+            // Normaliza cada opção garantindo que votes seja numérico
+            const normalizedOptions = parsedOptions.map((opt) => {
+                const rawVotes = opt.votes ?? opt.votos ?? opt.votos_count ?? 0;
+                return {
+                    ...opt,
+                    votes: Number(rawVotes) || 0
+                };
+            });
+
+            // Soma forçada para não depender de total_votes zerado da API
+            const calculatedTotal = normalizedOptions.reduce((acc, opt) => acc + opt.votes, 0);
+
+            return {
+                ...enquete,
+                options: normalizedOptions,
+                total_votes: calculatedTotal,
+                hasVoted: localVotes.includes(enquete.id)
+            };
+        });
     }, []);
 
+    // Busca via REST API
     const fetchEnquetes = useCallback(async (isInitial = false) => {
         if (isFetchingRef.current) return;
         isFetchingRef.current = true;
@@ -66,40 +98,45 @@ export function useEnqueteRealtime(intervalo = 3000) {
     }, [processEnquetesWithVoteStatus]);
 
     useEffect(() => {
-        let eventSource: EventSource | null = null;
-        let reconnectTimeout = null;
+        let eventSource = null;
 
-        const connectSSE = () => {
-            try {
-                eventSource = new EventSource(`${BASE_URL}/stream`);
-                eventSource.onmessage = (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        console.log("Entrega do SSE: ",data);
-                        setEnquetes(processEnquetesWithVoteStatus(data));
-                        setLoading(false);
-                    } catch (err) {
-                        console.error('Erro ao processar evento SSE:', err);
+        // Carga inicial via REST
+        fetchEnquetes(true);
+
+        const connect = () => {
+            eventSource = new EventSource(`${BASE_URL}/stream`);
+
+            eventSource.onmessage = (event) => {
+                try {
+                    // Ignora eventos de keep-alive enviados como comentário pelo PHP
+                    if (!event.data || event.data.trim() === "" || event.data.startsWith(":")) return;
+
+                    const data = JSON.parse(event.data);
+
+                    if (Array.isArray(data) && data.length > 0) {
+                        const processed = processEnquetesWithVoteStatus(data);
+                        setEnquetes(processed);
                     }
-                };
-                eventSource.onerror = (error) => {
-                    if (eventSource.readyState === EventSource.CLOSED) {
-                        console.log('Conexão SSE fechada, tentando reconectar...');
-                    }
-                };
-            } catch (error) {
-                console.error('Erro ao conectar SSE:', error);
-            }
+                    setLoading(false);
+                } catch (err) {
+                    console.error('Erro ao processar JSON do SSE:', err);
+                }
+            };
+
+            eventSource.onerror = (err) => {
+                // Quando o PHP encerra após 8s, o EventSource reconecta automaticamente.
+                // Não limpamos o estado aqui para a tela não zerar!
+            };
         };
 
-        fetchEnquetes(true);
-        connectSSE();
+        connect();
 
-        // Cleanup ao desmontar o componente
         return () => {
-            if (eventSource) eventSource.close();
-        }
-    }, [fetchEnquetes, processEnquetesWithVoteStatus]);
+            if (eventSource) {
+                eventSource.close();
+            }
+        };
+    }, []); // Array VAZIO absoluto
 
     return {
         enquetes,

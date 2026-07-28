@@ -16,28 +16,25 @@ class StreamController {
         header('Connection: keep-alive');
         header('X-Accel-Buffering: no');
 
-        // Limpa e desativa todos os buffers de saída anteriores
+        // Limpa e desativa todos os buffers de saída
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
 
-        // Define o tempo padrão de reconexão nativa do EventSource para 1 segundo
         echo "retry: 1000\n\n";
         flush();
 
         $db = Database::getConnection();
         $startTime = time();
-        $maxDuration = 8; // Duração ideal para Vercel / Serverless
+        $maxDuration = 8; // Duração
 
         while (true) {
-            // Encerra suavemente antes do timeout do Serverless para o browser reconectar sem erro
             if ((time() - $startTime) >= $maxDuration) {
                 echo ": keep-alive\n\n";
                 flush();
                 break;
             }
 
-            // Cancela se o cliente fechou a conexão no navegador
             if (connection_aborted()) {
                 break;
             }
@@ -53,43 +50,47 @@ class StreamController {
                     ");
                     $stmt->execute([$pollId]);
                     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                } else {
-                    $stmt = $db->prepare("
-                        SELECT e.*,
-                            (
-                                SELECT JSON_ARRAYAGG(
-                                    JSON_OBJECT(
-                                        'id', eo.id,
-                                        'option_text', eo.option_text,
-                                        'votes', CAST((SELECT COUNT(*) FROM enquete_votos ev WHERE ev.option_id = eo.id) AS UNSIGNED)
-                                    )
-                                )
-                                FROM enquetes_options eo WHERE eo.enquete_id = e.id
-                            ) AS options
-                        FROM enquetes e
-                        ORDER BY e.created_at DESC
-                    ");
-                    $stmt->execute();
-                    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-                    foreach ($results as &$poll) {
-                        // Decodifica as opções em um array PHP limpo
-                        $options = json_decode($poll['options'] ?? '[]', true) ?? [];
+                    foreach ($results as &$opt) {
+                        $opt['votes'] = (int)$opt['votes'];
+                    }
+
+                } else {
+                    $stmt = $db->prepare("SELECT * FROM enquetes ORDER BY created_at DESC");
+                    $stmt->execute();
+                    $enquetes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    $results = [];
+
+                    foreach ($enquetes as $poll) {
+                        $stmtOpt = $db->prepare("
+                            SELECT
+                                eo.id,
+                                eo.option_text,
+                                COUNT(ev.id) AS votes
+                            FROM enquetes_options eo
+                            LEFT JOIN enquete_votos ev ON ev.option_id = eo.id
+                            WHERE eo.enquete_id = ?
+                            GROUP BY eo.id
+                            ORDER BY eo.id ASC
+                        ");
+                        $stmtOpt->execute([$poll['id']]);
+                        $options = $stmtOpt->fetchAll(PDO::FETCH_ASSOC);
 
                         $totalVotes = 0;
-                        if (is_array($options)) {
-                            foreach ($options as &$opt) {
-                                $opt['votes'] = (int)($opt['votes'] ?? 0);
-                                $totalVotes += $opt['votes'];
-                            }
+                        foreach ($options as &$opt) {
+                            $opt['votes'] = (int)$opt['votes'];
+                            $totalVotes += $opt['votes'];
                         }
+                        unset($opt);
 
                         $poll['options'] = $options;
-                        // Injeta o total de votos e garante tipos corretos para o frontend
                         $poll['total_votes'] = $totalVotes;
-                    }
-                } // <--- Fechamento do ELSE adicionado aqui!
 
+                        $results[] = $poll;
+                    }
+                }
+
+                // Envia o JSON limpo
                 echo "data: " . json_encode($results) . "\n\n";
                 flush();
 
