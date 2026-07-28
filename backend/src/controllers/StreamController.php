@@ -1,4 +1,5 @@
 <?php
+
 namespace Controllers;
 
 use Config\Database;
@@ -41,59 +42,59 @@ class StreamController {
 
             try {
                 if ($pollId) {
+                    // Mesma lógica de PollController::show(), incluindo o criador
                     $stmt = $db->prepare("
-                        SELECT po.id, po.option_text, COUNT(v.id) as votes
-                        FROM enquetes_options po
-                        LEFT JOIN enquete_votos v ON v.option_id = po.id
-                        WHERE po.enquete_id = ?
-                        GROUP BY po.id
+                        SELECT e.*, u.name AS criador
+                        FROM enquetes e
+                        JOIN users u ON e.user_id = u.id
+                        WHERE e.id = ?
                     ");
                     $stmt->execute([$pollId]);
-                    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    $enquete = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                    foreach ($results as &$opt) {
-                        $opt['votes'] = (int)$opt['votes'];
+                    if ($enquete) {
+                        // Lê 'votes' direto da tabela de opções (fonte real do contador),
+                        // igual ao PollController::index()/show() — nada de COUNT em enquete_votos.
+                        $stmtOpt = $db->prepare("SELECT id, option_text, votes FROM enquetes_options WHERE enquete_id = ?");
+                        $stmtOpt->execute([$pollId]);
+                        $options = $stmtOpt->fetchAll(PDO::FETCH_ASSOC);
+
+                        $enquete['options'] = $options;
+                        $enquete['total_votes'] = array_sum(array_column($options, 'votes'));
+
+                        $results = [$enquete];
+                    } else {
+                        $results = [];
                     }
-
                 } else {
-                    $stmt = $db->prepare("SELECT * FROM enquetes ORDER BY created_at DESC");
+                    // Mesma query de PollController::index()
+                    $stmt = $db->prepare("
+                        SELECT e.id, e.title, e.description, e.created_at, e.user_id,
+                               COALESCE(e.category, 'Geral') AS category, u.name AS criador
+                        FROM enquetes e
+                        JOIN users u ON e.user_id = u.id
+                        ORDER BY e.created_at DESC
+                    ");
                     $stmt->execute();
                     $enquetes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                    $results = [];
 
-                    foreach ($enquetes as $poll) {
-                        $stmtOpt = $db->prepare("
-                            SELECT
-                                eo.id,
-                                eo.option_text,
-                                COUNT(ev.id) AS votes
-                            FROM enquetes_options eo
-                            LEFT JOIN enquete_votos ev ON ev.option_id = eo.id
-                            WHERE eo.enquete_id = ?
-                            GROUP BY eo.id
-                            ORDER BY eo.id ASC
-                        ");
+                    $stmtOpt = $db->prepare("SELECT id, option_text, votes FROM enquetes_options WHERE enquete_id = ?");
+
+                    foreach ($enquetes as &$poll) {
                         $stmtOpt->execute([$poll['id']]);
                         $options = $stmtOpt->fetchAll(PDO::FETCH_ASSOC);
 
-                        $totalVotes = 0;
-                        foreach ($options as &$opt) {
-                            $opt['votes'] = (int)$opt['votes'];
-                            $totalVotes += $opt['votes'];
-                        }
-                        unset($opt);
-
                         $poll['options'] = $options;
-                        $poll['total_votes'] = $totalVotes;
-
-                        $results[] = $poll;
+                        $poll['total_votes'] = array_sum(array_column($options, 'votes'));
                     }
+                    unset($poll);
+
+                    $results = $enquetes;
                 }
 
                 // Envia o JSON limpo
                 echo "data: " . json_encode($results) . "\n\n";
                 flush();
-
             } catch (\Throwable $e) {
                 echo "event: error\ndata: " . json_encode(['error' => $e->getMessage()]) . "\n\n";
                 flush();

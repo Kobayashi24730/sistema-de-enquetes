@@ -112,7 +112,7 @@ export function useEnqueteRealtime() {
                     if (!event.data || event.data.trim() === "" || event.data.startsWith(":")) return;
 
                     const data = JSON.parse(event.data);
-
+                    console.log("debug SSE: ",data);
                     if (Array.isArray(data) && data.length > 0) {
                         const processed = processEnquetesWithVoteStatus(data);
                         setEnquetes(processed);
@@ -124,8 +124,6 @@ export function useEnqueteRealtime() {
             };
 
             eventSource.onerror = (err) => {
-                // Quando o PHP encerra após 8s, o EventSource reconecta automaticamente.
-                // Não limpamos o estado aqui para a tela não zerar!
             };
         };
 
