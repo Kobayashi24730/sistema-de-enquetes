@@ -92,9 +92,9 @@ switch ($route) {
         $userData = Middlewares\AuthMiddleware::authenticate();
 
         if ($method === 'PUT') {
-            $userController->update($userIdFromRoute);
+            $userController->update($userData['id']);
         } elseif ($method === 'DELETE') {
-            $userController->delete($userIdFromRoute);
+            $userController->delete($userData['id']);
         } else {
             http_response_code(405);
             echo json_encode(['error' => 'Método não permitido para /usuarios/{id}. Use PUT ou DELETE.']);
