@@ -21,18 +21,25 @@ class StreamController {
             ob_end_clean();
         }
 
+        // Define o tempo padrão de reconexão do EventSource para 1 segundo em caso de queda
+        echo "retry: 1000\n\n";
+        flush();
+
         $db = Database::getConnection();
         $startTime = time();
-
-        // Em Serverless, mantemos transmissões mais curtas (ex: 25 segundos)
-        // O cliente EventSource no frontend reconecta automaticamente assim que fechar.
-        $maxDuration = 25;
+        $maxDuration = 25; // Limite para evitar timeouts em Serverless/Apache/Nginx
 
         while (true) {
+            // Se atingir o tempo máximo do loop, encerra suavemente para o frontend reconectar sem erro
             if ((time() - $startTime) >= $maxDuration) {
-                // Envia um ping final para instruir a reconexão suave
-                echo "event: ping\ndata: {\"retry\": 1000}\n\n";
+                // Comentário SSE
+                echo ": keep-alive\n\n";
                 flush();
+                break;
+            }
+
+            // Verifica se a conexão com o cliente/navegador foi abortada
+            if (connection_aborted()) {
                 break;
             }
 
@@ -67,14 +74,14 @@ class StreamController {
                     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                     foreach ($results as &$poll) {
-                        $poll['options'] = json_decode($poll['options'] ?? '[]');
+                        $poll['options'] = json_decode($poll['options'] ?? '[]', true);
                     }
                 }
-
                 echo "data: " . json_encode($results) . "\n\n";
                 flush();
 
             } catch (\Throwable $e) {
+                // Em caso de erro, loga ou envia evento de erro estruturado
                 echo "event: error\ndata: " . json_encode(['error' => $e->getMessage()]) . "\n\n";
                 flush();
                 break;

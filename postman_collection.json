@@ -1,8 +1,6 @@
 {
   "info": {
-    "_postman_id": "sistema-enquetes-api",
     "name": "Sistema de Enquetes API",
-    "description": "API completa do Sistema de Enquetes - Desafio Técnico Trainee/Júnior",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -13,81 +11,25 @@
           "name": "Register",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"João Silva\",\n  \"email\": \"joao@example.com\",\n  \"senha\": \"123456\"\n}"
+              "raw": "{\"name\":\"Teste\",\"email\":\"teste@email.com\",\"password\":\"123456\"}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["register"]
-            },
-            "description": "Criar novo usuário. Aceita campos em português (nome/senha) ou inglês (name/password). Email deve ser válido e senha mínimo 6 caracteres."
-          },
-          "response": []
+            "url": {"raw": "{{baseUrl}}/register", "host": ["{{baseUrl}}"], "path": ["register"]}
+          }
         },
         {
           "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (pm.response.code === 200) {",
-                  "    pm.collectionVariables.set(\"token\", jsonData.token);",
-                  "    console.log(\"Token salvo:\", jsonData.token);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{"key": "Content-Type", "value": "application/json"}],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"joao@example.com\",\n  \"senha\": \"123456\"\n}"
+              "raw": "{\"email\":\"teste@email.com\",\"password\":\"123456\"}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["login"]
-            },
-            "description": "Autenticar usuário e obter JWT. Aceita campos em português (email/senha) ou inglês (email/password). Retorna token JWT válido por 24h."
-          },
-          "response": []
-        },
-        {
-          "name": "Profile",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["profile"]
-            },
-            "description": "Buscar dados do usuário autenticado. Requer token JWT válido."
-          },
-          "response": []
+            "url": {"raw": "{{baseUrl}}/login", "host": ["{{baseUrl}}"], "path": ["login"]}
+          }
         }
       ]
     },
@@ -98,248 +40,44 @@
           "name": "Listar Enquetes",
           "request": {
             "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/enquetes",
-              "host": ["{{baseUrl}}"],
-              "path": ["enquetes"]
-            },
-            "description": "Listar todas as enquetes públicas. Retorna array com id, title, description, category, criador, options[] e total_votes."
-          },
-          "response": []
+            "url": {"raw": "{{baseUrl}}/enquetes", "host": ["{{baseUrl}}"], "path": ["enquetes"]}
+          }
         },
         {
           "name": "Criar Enquete",
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Qual sua linguagem preferida?\",\n  \"description\": \"Enquete sobre preferências de programação\",\n  \"category\": \"Tecnologia\",\n  \"options\": [\n    \"JavaScript\",\n    \"Python\",\n    \"PHP\",\n    \"Java\"\n  ]\n}"
+              "raw": "{\"title\":\"Minha Enquete\",\"description\":\"Teste\",\"category\":\"Geral\",\"options\":[\"Opcao 1\",\"Opcao 2\",\"Opcao 3\"]}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/enquetes",
-              "host": ["{{baseUrl}}"],
-              "path": ["enquetes"]
-            },
-            "description": "Criar nova enquete. Requer autenticação JWT. Título e opções são obrigatórios. Mínimo 2 opções, máximo 8."
-          },
-          "response": []
-        },
-        {
-          "name": "Mostrar Enquete",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "disabled": true
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/enquetes/show?id=1",
-              "host": ["{{baseUrl}}"],
-              "path": ["enquetes", "show"],
-              "query": [
-                {
-                  "key": "id",
-                  "value": "1",
-                  "description": "ID da enquete"
-                }
-              ]
-            },
-            "description": "Buscar detalhes de uma enquete específica. Se autenticado, retorna também voted_option_id indicando se o usuário já votou."
-          },
-          "response": []
-        },
-        {
-          "name": "Atualizar Enquete",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Qual sua linguagem preferida? (Atualizada)\",\n  \"description\": \"Enquete atualizada sobre preferências\",\n  \"category\": \"Tecnologia\",\n  \"options\": [\n    \"JavaScript\",\n    \"Python\",\n    \"PHP\",\n    \"Go\",\n    \"Rust\"\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/enquetes/update?id=1",
-              "host": ["{{baseUrl}}"],
-              "path": ["enquetes", "update"],
-              "query": [
-                {
-                  "key": "id",
-                  "value": "1",
-                  "description": "ID da enquete"
-                }
-              ]
-            },
-            "description": "Atualizar enquete existente. Requer autenticação JWT e que o usuário seja o criador. Remove e recria as opções (votos são perdidos)."
-          },
-          "response": []
-        },
-        {
-          "name": "Deletar Enquete",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/enquetes/delete?id=1",
-              "host": ["{{baseUrl}}"],
-              "path": ["enquetes", "delete"],
-              "query": [
-                {
-                  "key": "id",
-                  "value": "1",
-                  "description": "ID da enquete"
-                }
-              ]
-            },
-            "description": "Excluir enquete. Requer autenticação JWT e que o usuário seja o criador."
-          },
-          "response": []
+            "url": {"raw": "{{baseUrl}}/enquetes", "host": ["{{baseUrl}}"], "path": ["enquetes"]}
+          }
         },
         {
           "name": "Votar",
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "disabled": true
-              }
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"poll_id\": 1,\n  \"option_id\": 2\n}"
+              "raw": "{\"poll_id\":1,\"option_id\":1}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/enquetes/vote",
-              "host": ["{{baseUrl}}"],
-              "path": ["enquetes", "vote"]
-            },
-            "description": "Votar em uma enquete. Requer poll_id (ou enquete_id) e option_id. Pode ser feito anonimamente ou autenticado. Rate limit: 5 votos por minuto por IP. Envia email de notificação ao criador."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Password Recovery",
-      "item": [
-        {
-          "name": "Forgot Password",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"joao@example.com\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/forgot-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["forgot-password"]
-            },
-            "description": "Solicitar recuperação de senha. Envia email com token de reset válido por 30 minutos."
-          },
-          "response": []
-        },
-        {
-          "name": "Reset Password",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"token\": \"abc123def456\",\n  \"password\": \"novaSenha123\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/reset-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["reset-password"]
-            },
-            "description": "Resetar senha usando token recebido por email. Token válido por 30 minutos. Nova senha deve ter mínimo 6 caracteres."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Real-time",
-      "item": [
-        {
-          "name": "Stream SSE",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/stream?poll_id=1",
-              "host": ["{{baseUrl}}"],
-              "path": ["stream"],
-              "query": [
-                {
-                  "key": "poll_id",
-                  "value": "1",
-                  "description": "ID da enquete para stream em tempo real"
-                }
-              ]
-            },
-            "description": "Server-Sent Events (SSE) para receber atualizações em tempo real de uma enquete. Mantém conexão aberta e envia dados a cada 2 segundos. Timeout: 5 minutos."
-          },
-          "response": []
+            "url": {"raw": "{{baseUrl}}/enquetes/vote", "host": ["{{baseUrl}}"], "path": ["enquetes", "vote"]}
+          }
         }
       ]
     }
   ],
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:8000",
-      "type": "string"
-    },
-    {
-      "key": "token",
-      "value": "",
-      "type": "string"
-    }
+    {"key": "baseUrl", "value": "http://localhost:8000"},
+    {"key": "token", "value": ""}
   ]
 }
