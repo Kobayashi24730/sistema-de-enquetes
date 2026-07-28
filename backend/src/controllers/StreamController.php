@@ -21,24 +21,23 @@ class StreamController {
             ob_end_clean();
         }
 
-        // Define o tempo padrão de reconexão do EventSource para 1 segundo em caso de queda
+        // Define o tempo padrão de reconexão nativa do EventSource para 1 segundo
         echo "retry: 1000\n\n";
         flush();
 
         $db = Database::getConnection();
         $startTime = time();
-        $maxDuration = 8;
+        $maxDuration = 8; // Duração ideal para Vercel / Serverless
 
         while (true) {
-            // Se atingir o tempo máximo do loop, encerra suavemente para o frontend reconectar sem erro
+            // Encerra suavemente antes do timeout do Serverless para o browser reconectar sem erro
             if ((time() - $startTime) >= $maxDuration) {
-                // Comentário SSE
                 echo ": keep-alive\n\n";
                 flush();
                 break;
             }
 
-            // Verifica se a conexão com o cliente/navegador foi abortada
+            // Cancela se o cliente fechou a conexão no navegador
             if (connection_aborted()) {
                 break;
             }
@@ -55,7 +54,6 @@ class StreamController {
                     $stmt->execute([$pollId]);
                     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 } else {
-                    // ... dentro do else (quando lista todas as enquetes)
                     $stmt = $db->prepare("
                         SELECT e.*,
                             (
@@ -75,22 +73,27 @@ class StreamController {
                     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                     foreach ($results as &$poll) {
-                        // Garante que options vire um array PHP limpo
-                        $options = json_decode($poll['options'] ?? '[]', true);
+                        // Decodifica as opções em um array PHP limpo
+                        $options = json_decode($poll['options'] ?? '[]', true) ?? [];
 
-                        // Converte os votos manualmente caso o JSON do MySQL traga como string
+                        $totalVotes = 0;
                         if (is_array($options)) {
                             foreach ($options as &$opt) {
                                 $opt['votes'] = (int)($opt['votes'] ?? 0);
+                                $totalVotes += $opt['votes'];
                             }
                         }
-                        $poll['options'] = $options;
-                    }
 
-                    echo "data: " . json_encode($results) . "\n\n";
-                    flush();
+                        $poll['options'] = $options;
+                        // Injeta o total de votos e garante tipos corretos para o frontend
+                        $poll['total_votes'] = $totalVotes;
+                    }
+                } // <--- Fechamento do ELSE adicionado aqui!
+
+                echo "data: " . json_encode($results) . "\n\n";
+                flush();
+
             } catch (\Throwable $e) {
-                // Em caso de erro, loga ou envia evento de erro estruturado
                 echo "event: error\ndata: " . json_encode(['error' => $e->getMessage()]) . "\n\n";
                 flush();
                 break;
