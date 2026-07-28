@@ -56,7 +56,7 @@ export default function Perfil() {
 
         setSubmitting(true);
         try {
-            await api.put(`/usuarios/item/${user.id}`, { nome, email });
+            await api.put(`/usuarios/item`, { nome, email });
             setUser({ ...user, nome, email });
             toast.success('Perfil atualizado com sucesso!');
         } catch (err) {

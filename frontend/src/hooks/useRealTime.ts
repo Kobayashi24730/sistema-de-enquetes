@@ -66,7 +66,7 @@ export function useEnqueteRealtime(intervalo = 3000) {
     }, [processEnquetesWithVoteStatus]);
 
     useEffect(() => {
-        let eventSource = null;
+        let eventSource: EventSource | null = null;
         let reconnectTimeout = null;
 
         const connectSSE = () => {
@@ -74,21 +74,22 @@ export function useEnqueteRealtime(intervalo = 3000) {
                 eventSource = new EventSource(`${BASE_URL}/stream`);
                 eventSource.onmessage = (event) => {
                     try {
-                        const data = JSON.parse(event.data)
+                        const data = JSON.parse(event.data);
+                        console.log("Entrega do SSE: ",data);
                         setEnquetes(processEnquetesWithVoteStatus(data));
                         setLoading(false);
                     } catch (err) {
                         console.error('Erro ao processar evento SSE:', err);
                     }
-                }
+                };
+                eventSource.onerror = (error) => {
+                    if (eventSource.readyState === EventSource.CLOSED) {
+                        console.log('Conexão SSE fechada, tentando reconectar...');
+                    }
+                };
             } catch (error) {
                 console.error('Erro ao conectar SSE:', error);
             }
-            eventSource.onerror = (error) => {
-                console.warn('Conexão SSE perdida. Tentando reconectar em 5 segundos...', error);
-                eventSource.close();
-                reconnectTimeout = setTimeout(() => { connectSSE(); }, 3000);
-            };
         };
 
         fetchEnquetes(true);
@@ -97,7 +98,6 @@ export function useEnqueteRealtime(intervalo = 3000) {
         // Cleanup ao desmontar o componente
         return () => {
             if (eventSource) eventSource.close();
-            if (reconnectTimeout) clearTimeout(reconnectTimeout);
         }
     }, [fetchEnquetes, processEnquetesWithVoteStatus]);
 

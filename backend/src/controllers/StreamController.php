@@ -55,6 +55,7 @@ class StreamController {
                     $stmt->execute([$pollId]);
                     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 } else {
+                    // ... dentro do else (quando lista todas as enquetes)
                     $stmt = $db->prepare("
                         SELECT e.*,
                             (
@@ -62,7 +63,7 @@ class StreamController {
                                     JSON_OBJECT(
                                         'id', eo.id,
                                         'option_text', eo.option_text,
-                                        'votes', (SELECT COUNT(*) FROM enquete_votos ev WHERE ev.option_id = eo.id)
+                                        'votes', CAST((SELECT COUNT(*) FROM enquete_votos ev WHERE ev.option_id = eo.id) AS UNSIGNED)
                                     )
                                 )
                                 FROM enquetes_options eo WHERE eo.enquete_id = e.id
@@ -74,12 +75,20 @@ class StreamController {
                     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                     foreach ($results as &$poll) {
-                        $poll['options'] = json_decode($poll['options'] ?? '[]', true);
-                    }
-                }
-                echo "data: " . json_encode($results) . "\n\n";
-                flush();
+                        // Garante que options vire um array PHP limpo
+                        $options = json_decode($poll['options'] ?? '[]', true);
 
+                        // Converte os votos manualmente caso o JSON do MySQL traga como string
+                        if (is_array($options)) {
+                            foreach ($options as &$opt) {
+                                $opt['votes'] = (int)($opt['votes'] ?? 0);
+                            }
+                        }
+                        $poll['options'] = $options;
+                    }
+
+                    echo "data: " . json_encode($results) . "\n\n";
+                    flush();
             } catch (\Throwable $e) {
                 // Em caso de erro, loga ou envia evento de erro estruturado
                 echo "event: error\ndata: " . json_encode(['error' => $e->getMessage()]) . "\n\n";
